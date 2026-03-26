@@ -25,7 +25,8 @@
   ],
   "autoload-dev": {
     "psr-4": {
-      "PhpOpcua\\Cli\\Tests\\": "tests/"
+      "PhpOpcua\\Cli\\Tests\\": "tests/",
+      "PhpOpcua\\Client\\Tests\\": "vendor/php-opcua/opcua-client/tests/"
     }
   },
   "keywords": [
@@ -43,7 +44,7 @@
   ],
   "require": {
     "php": "^8.2",
-    "php-opcua/opcua-client": "dev-master"
+    "php-opcua/opcua-client": "@dev"
   },
   "require-dev": {
     "pestphp/pest": "^3.0",
