@@ -1,0 +1,191 @@
+# OPC UA CLI
+
+> Command-line tool for OPC UA servers. Browse, read, write, watch, discover endpoints, manage certificates, and generate PHP code from NodeSet2.xml — all from the terminal. Built on php-opcua/opcua-client. No framework dependencies.
+
+## What is this
+
+A PHP CLI tool for interacting with OPC UA servers directly from the terminal. It wraps the php-opcua/opcua-client library into composable single-shot commands with Unix pipe support. Supports PHP 8.2 through 8.5.
+
+## Use cases
+
+- Browse the OPC UA address space of PLCs, SCADA systems, sensors
+- Read and write process variables from the command line
+- Watch value changes in real time (subscription or polling mode)
+- Discover server endpoints and security policies
+- Generate typed PHP classes (DTOs, enums, codecs) from NodeSet2.xml files
+- Dump a server's address space to NodeSet2.xml
+- Manage server certificate trust from the terminal
+- Pipe JSON output to jq, grep, or other Unix tools
+
+## Installation
+
+```
+composer require php-opcua/opcua-cli
+```
+
+Global:
+```
+composer global require php-opcua/opcua-cli
+```
+
+Binary: `vendor/bin/opcua-cli` (local) or `opcua-cli` (global)
+
+## Commands
+
+### browse — Browse the address space
+
+```bash
+opcua-cli browse opc.tcp://localhost:4840
+opcua-cli browse opc.tcp://localhost:4840 /Objects/MyPLC
+opcua-cli browse opc.tcp://localhost:4840 "ns=2;i=1000"
+opcua-cli browse opc.tcp://localhost:4840 /Objects --recursive --depth=3
+opcua-cli browse opc.tcp://localhost:4840 /Objects --json
+```
+
+Options: --recursive, --depth=N (default: 3)
+
+### read — Read a node value
+
+```bash
+opcua-cli read opc.tcp://localhost:4840 "i=2259"
+opcua-cli read opc.tcp://localhost:4840 "ns=2;i=1001" --attribute=DisplayName
+opcua-cli read opc.tcp://localhost:4840 "ns=2;i=1001" --json
+```
+
+Options: --attribute=NAME (Value, DisplayName, BrowseName, DataType, NodeClass, Description, AccessLevel, NodeId)
+
+### write — Write a value to a node
+
+```bash
+opcua-cli write opc.tcp://localhost:4840 "ns=2;i=1001" 42 --type=Int32
+opcua-cli write opc.tcp://localhost:4840 "ns=2;i=2000" true --type=Boolean
+```
+
+Options: --type=TYPE (Boolean, SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float, Double, String). Without --type, auto-detection is used.
+
+### endpoints — Discover server endpoints
+
+```bash
+opcua-cli endpoints opc.tcp://localhost:4840
+```
+
+### watch — Watch a value in real time
+
+```bash
+opcua-cli watch opc.tcp://localhost:4840 "ns=2;i=1001"
+opcua-cli watch opc.tcp://localhost:4840 "ns=2;i=1001" --interval=250
+```
+
+Default: subscription mode (server pushes changes). With --interval=N: polling mode (read every N ms).
+
+### generate:nodeset — Generate PHP classes from NodeSet2.xml
+
+```bash
+opcua-cli generate:nodeset path/to/Opc.Ua.Di.NodeSet2.xml --output=src/Generated/Di/ --namespace=App\\OpcUa\\Di
+```
+
+Generates: NodeId constants, PHP enums (BackedEnum), DTOs (readonly classes), Codecs (ExtensionObjectCodec), Registrar. No server connection required.
+
+Options: --output=PATH (default: ./generated/), --namespace=NS (default: Generated\\OpcUa)
+
+### dump:nodeset — Export server address space to NodeSet2.xml
+
+```bash
+opcua-cli dump:nodeset opc.tcp://192.168.1.100:4840 --output=MyPLC.NodeSet2.xml
+opcua-cli dump:nodeset opc.tcp://192.168.1.100:4840 --output=MyPLC.NodeSet2.xml --namespace=2
+```
+
+Options: --output=FILE (required), --namespace=N (default: all non-zero)
+
+### trust — Trust a server certificate
+
+```bash
+opcua-cli trust opc.tcp://server:4840 --trust-store=~/.opcua
+```
+
+### trust:list — List trusted certificates
+
+```bash
+opcua-cli trust:list --trust-store=~/.opcua
+```
+
+### trust:remove — Remove a trusted certificate
+
+```bash
+opcua-cli trust:remove ab:cd:12:34:... --trust-store=~/.opcua
+```
+
+Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+expiry, full), --no-trust-policy
+
+## Security options (all commands)
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| --security-policy=POLICY | -s | None, Basic256Sha256, Aes256Sha256RsaPss, etc. |
+| --security-mode=MODE | -m | None, Sign, SignAndEncrypt |
+| --cert=PATH | | Client certificate |
+| --key=PATH | | Client private key |
+| --ca=PATH | | CA certificate |
+| --username=USER | -u | Username |
+| --password=PASS | -p | Password |
+| --timeout=SECONDS | -t | Connection timeout (default: 5) |
+
+## Global options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| --json | -j | JSON output |
+| --debug | -d | Debug logging on stdout |
+| --debug-stderr | | Debug logging on stderr |
+| --debug-file=PATH | | Debug logging to file |
+| --help | -h | Show help |
+| --version | -v | Show version |
+
+## Architecture
+
+- Application (src/Application.php): entry point, command registration, argv routing
+- ArgvParser (src/ArgvParser.php): CLI argument and option parsing (no deps)
+- CommandRunner (src/CommandRunner.php): client lifecycle, security/auth/trust configuration
+- Commands/ (src/Commands/): 10 command implementations, each implements CommandInterface
+- Output/ (src/Output/): OutputInterface with ConsoleOutput (tree/text) and JsonOutput adapters
+- CodeGenerator (src/CodeGenerator.php): NodeSet2.xml → PHP code generation
+- NodeSetParser (src/NodeSetParser.php): NodeSet2.xml XML parsing
+- NodeSetXmlBuilder (src/NodeSetXmlBuilder.php): address space → NodeSet2.xml export
+- StreamLogger (src/StreamLogger.php): PSR-3 logger writing to a stream (stdout/stderr/file)
+
+## Design principles
+
+- Thin CLI layer: business logic lives in php-opcua/opcua-client, this package handles CLI concerns only
+- No framework: no Symfony Console, no Laravel — zero runtime dependencies beyond opcua-client and ext-openssl
+- Command pattern: each command implements CommandInterface (getName, getDescription, getUsage, execute, requiresConnection)
+- Output strategy: all commands write through OutputInterface — ConsoleOutput for humans, JsonOutput for machines
+- Unix composability: single-shot commands, JSON output, pipe-friendly
+
+## Related packages
+
+- php-opcua/opcua-client: pure PHP OPC UA client library (the foundation)
+- php-opcua/opcua-client-nodeset: pre-generated PHP types from 51 OPC UA companion specifications
+- php-opcua/laravel-opcua: Laravel integration
+- php-opcua/opcua-session-manager: session persistence across PHP requests
+
+## Requirements
+
+- PHP >= 8.2
+- ext-openssl
+- php-opcua/opcua-client
+
+## Versioning
+
+This package follows the same version numbering as php-opcua/opcua-client.
+
+## License
+
+MIT
+
+## Links
+
+- Repository: https://github.com/php-opcua/opcua-cli
+- Documentation: https://github.com/php-opcua/opcua-cli/tree/master/doc
+- Issues: https://github.com/php-opcua/opcua-cli/issues
+- Packagist: https://packagist.org/packages/php-opcua/opcua-cli
+- Client library: https://github.com/php-opcua/opcua-client

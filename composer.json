@@ -1,0 +1,61 @@
+{
+  "name": "php-opcua/opcua-cli",
+  "description": "CLI tool for OPC UA — browse, read, write, watch, discover endpoints, manage certificates, and generate code from NodeSet2.xml",
+  "homepage": "https://github.com/php-opcua/opcua-cli",
+  "support": {
+    "issues": "https://github.com/php-opcua/opcua-cli/issues",
+    "source": "https://github.com/php-opcua/opcua-cli",
+    "docs": "https://github.com/php-opcua/opcua-client/tree/master/doc"
+  },
+  "type": "library",
+  "bin": [
+    "bin/opcua-cli"
+  ],
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "PhpOpcua\\Cli\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Gianfrancesco Aurecchia",
+      "email": "gianfri.aur@gmail.com"
+    }
+  ],
+  "autoload-dev": {
+    "psr-4": {
+      "PhpOpcua\\Cli\\Tests\\": "tests/"
+    }
+  },
+  "keywords": [
+    "opcua",
+    "opc-ua",
+    "cli",
+    "php",
+    "php-opcua",
+    "industrial",
+    "iot",
+    "plc",
+    "scada",
+    "nodeset2",
+    "code-generator"
+  ],
+  "require": {
+    "php": "^8.2",
+    "php-opcua/opcua-client": "dev-master"
+  },
+  "require-dev": {
+    "pestphp/pest": "^3.0",
+    "friendsofphp/php-cs-fixer": "^3.0"
+  },
+  "scripts": {
+    "format": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes",
+    "format:check": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes --dry-run --diff"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
+}
