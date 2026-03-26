@@ -222,4 +222,65 @@ describe('CodeGenerator', function () {
         expect($code)->toContain("public const Temp_2 = 'ns=1;i=2';");
         expect($code)->toContain("public const Temp_3 = 'ns=1;i=3';");
     });
+
+    it('resolves unknown dataType as mixed in DTO', function () {
+        $gen = new CodeGenerator();
+        $fields = [
+            ['name' => 'Unknown', 'dataType' => 'ns=99;i=12345'],
+        ];
+
+        $code = $gen->generateDtoClass('MixedDto', $fields, 'App');
+
+        expect($code)->toContain('public mixed $Unknown');
+    });
+
+    it('prefixes numeric-starting browse names with underscore', function () {
+        $gen = new CodeGenerator();
+        $nodes = [
+            'ns=1;i=1' => ['nodeId' => 'ns=1;i=1', 'browseName' => '123Node', 'displayName' => '123Node', 'type' => 'UAVariable'],
+        ];
+
+        $code = $gen->generateNodeIdClass('Test', $nodes, 'App');
+
+        expect($code)->toContain('public const _123Node');
+    });
+
+    it('prefixes numeric enum names with underscore', function () {
+        $gen = new CodeGenerator();
+        $values = [
+            ['name' => '0_Off', 'value' => 0],
+            ['name' => 'On', 'value' => 1],
+        ];
+
+        $code = $gen->generateEnumClass('NumericEnum', $values, 'App');
+
+        expect($code)->toContain('case _0_Off = 0;');
+        expect($code)->toContain('case On = 1;');
+    });
+
+    it('generates Codec with array of unknown types using readExtensionObject', function () {
+        $gen = new CodeGenerator();
+        $fields = [
+            ['name' => 'Items', 'dataType' => 'ns=99;i=12345', 'valueRank' => 1, 'isOptional' => false],
+        ];
+
+        $code = $gen->generateCodecClass('ArrayCodec', 'ArrayDto', $fields, 'App');
+
+        expect($code)->toContain('readExtensionObject()');
+        expect($code)->toContain('writeExtensionObject($item)');
+        expect($code)->toContain('readArray');
+    });
+
+    it('generates DTO with optional unknown type as mixed (no nullable)', function () {
+        $gen = new CodeGenerator();
+        $fields = [
+            ['name' => 'Extra', 'dataType' => 'ns=99;i=999', 'valueRank' => -1, 'isOptional' => true],
+        ];
+
+        $code = $gen->generateDtoClass('OptMixed', $fields, 'App');
+
+        // mixed type should not get '?' prefix
+        expect($code)->toContain('public mixed $Extra');
+        expect($code)->not->toContain('?mixed');
+    });
 });

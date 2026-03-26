@@ -161,7 +161,7 @@ class WriteCommand implements CommandInterface
      * @param mixed $value
      * @return string
      */
-    private function formatValue(mixed $value): string
+    public function formatValue(mixed $value): string
     {
         if (is_bool($value)) {
             return $value ? 'true' : 'false';

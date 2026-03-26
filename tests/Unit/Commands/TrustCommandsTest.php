@@ -62,19 +62,78 @@ describe('TrustCommand', function () {
 
     it('returns 1 when no trust store configured', function () {
         $cmd = new TrustCommand();
-        $client = MockClient::create();
+        // Provide a cert in endpoints but no trust store
+        $client = MockClient::create()
+            ->onGetEndpoints(fn () => [
+                new EndpointDescription(
+                    'opc.tcp://localhost:4840',
+                    'fake-cert-data',
+                    1,
+                    'http://opcfoundation.org/UA/SecurityPolicy#None',
+                    [new UserTokenPolicy('anon', 0, null, null, null)],
+                    '',
+                    0,
+                ),
+            ]);
         [$stdout, $stderr] = trustTestOutputStream();
         $output = new ConsoleOutput($stdout, $stderr);
         expect($cmd->execute($client, ['opc.tcp://localhost'], [], $output))->toBe(1);
+        expect(trustTestStreamContent($stderr))->toContain('No trust store configured');
     });
 
     it('returns 1 when no cert found in endpoints', function () {
         $cmd = new TrustCommand();
         $store = trustTestStore();
-        $client = MockClient::create()->setTrustStore($store);
+        $client = MockClient::create()
+            ->setTrustStore($store)
+            ->onGetEndpoints(fn () => [
+                new EndpointDescription(
+                    'opc.tcp://localhost:4840',
+                    null, // No cert
+                    1,
+                    'http://opcfoundation.org/UA/SecurityPolicy#None',
+                    [new UserTokenPolicy('anon', 0, null, null, null)],
+                    '',
+                    0,
+                ),
+            ]);
         [$stdout, $stderr] = trustTestOutputStream();
         $output = new ConsoleOutput($stdout, $stderr);
         expect($cmd->execute($client, ['opc.tcp://localhost'], [], $output))->toBe(1);
+        expect(trustTestStreamContent($stderr))->toContain('No server certificate');
+        trustTestCleanup($store);
+    });
+
+    it('trusts cert with unparseable PEM (fallback subject/expiry)', function () {
+        $cmd = new TrustCommand();
+        $store = trustTestStore();
+        // Use invalid cert data that won't parse with openssl_x509_parse
+        $certDer = 'invalid-certificate-data';
+        $client = MockClient::create()
+            ->setTrustStore($store)
+            ->onGetEndpoints(fn () => [
+                new EndpointDescription(
+                    'opc.tcp://localhost:4840',
+                    $certDer,
+                    1,
+                    'http://opcfoundation.org/UA/SecurityPolicy#None',
+                    [new UserTokenPolicy('anon', 0, null, null, null)],
+                    '',
+                    0,
+                ),
+            ]);
+
+        [$stdout, $stderr] = trustTestOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $code = $cmd->execute($client, ['opc.tcp://localhost:4840'], [], $output);
+
+        expect($code)->toBe(0);
+        $content = trustTestStreamContent($stdout);
+        expect($content)->toContain('Trusted');
+        expect($content)->toContain('Fingerprint');
+        // Should show Unknown subject and N/A expiry for unparseable cert
+        expect($content)->toContain('Unknown');
+
         trustTestCleanup($store);
     });
 
@@ -116,6 +175,8 @@ describe('TrustListCommand', function () {
     it('returns name and description', function () {
         $cmd = new TrustListCommand();
         expect($cmd->getName())->toBe('trust:list');
+        expect($cmd->getDescription())->toBeString();
+        expect($cmd->getUsage())->toContain('trust:list');
         expect($cmd->requiresConnection())->toBeFalse();
     });
 
@@ -150,6 +211,23 @@ describe('TrustListCommand', function () {
         $code = $cmd->execute($client, [], [], $output);
         expect($code)->toBe(0);
         expect(trustTestStreamContent($stdout))->toContain('Fingerprint');
+        trustTestCleanup($store);
+    });
+
+    it('lists trusted certs with JSON output', function () {
+        $cmd = new TrustListCommand();
+        $store = trustTestStore();
+        $cert = (new CertificateManager())->generateSelfSignedCertificate()['certDer'];
+        $store->trust($cert);
+        $client = MockClient::create()->setTrustStore($store);
+        [$stdout, $stderr] = trustTestOutputStream();
+        $output = new PhpOpcua\Cli\Output\JsonOutput($stdout, $stderr);
+        $code = $cmd->execute($client, [], [], $output);
+        expect($code)->toBe(0);
+        $content = trustTestStreamContent($stdout);
+        $decoded = json_decode($content, true);
+        expect($decoded)->toBeArray();
+        expect($decoded[0])->toHaveKey('Fingerprint');
         trustTestCleanup($store);
     });
 

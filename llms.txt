@@ -168,6 +168,15 @@ Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+exp
 - php-opcua/laravel-opcua: Laravel integration
 - php-opcua/opcua-session-manager: session persistence across PHP requests
 
+## Testing
+
+272 tests (253 unit + 19 integration), 592 assertions, 99.9% code coverage. Coverage must remain >= 99.5%.
+
+```
+./vendor/bin/pest
+php -d pcov.enabled=1 ./vendor/bin/pest --coverage
+```
+
 ## Requirements
 
 - PHP >= 8.2

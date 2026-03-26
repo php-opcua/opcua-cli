@@ -278,6 +278,20 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 | **`php-opcua/opcua-cli`** | **CLI tool (this package)** |
 | [`php-opcua/opcua-client-nodeset`](https://github.com/php-opcua/opcua-client-nodeset) | Pre-built NodeSet2 types for 51 OPC UA companion specifications |
 
+## Testing
+
+The project includes 272 tests (253 unit + 19 integration) with 592 assertions and **99.9% code coverage**.
+
+```bash
+# Run all tests
+./vendor/bin/pest
+
+# Run with coverage report (requires pcov)
+php -d pcov.enabled=1 ./vendor/bin/pest --coverage
+```
+
+Code coverage must remain >= 99.5%. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
 ## Requirements
 
 - PHP >= 8.2

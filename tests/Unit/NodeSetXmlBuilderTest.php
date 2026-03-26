@@ -157,6 +157,120 @@ describe('NodeSetXmlBuilder', function () {
         expect($xml)->toContain('Value="1"');
     });
 
+    it('skips unknown nodeClass', function () {
+        $builder = new NodeSetXmlBuilder();
+        $nodes = [
+            [
+                'nodeId' => 'ns=1;i=9999',
+                'nodeClass' => 999, // Unknown
+                'browseName' => '1:Unknown',
+                'displayName' => 'Unknown',
+                'references' => [],
+                'attributes' => [],
+            ],
+        ];
+
+        $xml = $builder->build($nodes, []);
+
+        expect($xml)->not->toContain('ns=1;i=9999');
+    });
+
+    it('builds UAReferenceType with Symmetric', function () {
+        $builder = new NodeSetXmlBuilder();
+        $nodes = [
+            [
+                'nodeId' => 'ns=1;i=6001',
+                'nodeClass' => NodeClass::ReferenceType->value,
+                'browseName' => '1:PeerOf',
+                'displayName' => 'PeerOf',
+                'references' => [],
+                'attributes' => ['Symmetric' => true],
+            ],
+        ];
+
+        $xml = $builder->build($nodes, []);
+
+        expect($xml)->toContain('<UAReferenceType');
+        expect($xml)->toContain('Symmetric="true"');
+    });
+
+    it('builds Definition with ValueRank and IsOptional fields', function () {
+        $builder = new NodeSetXmlBuilder();
+        $nodes = [
+            [
+                'nodeId' => 'ns=1;i=3050',
+                'nodeClass' => NodeClass::DataType->value,
+                'browseName' => '1:ComplexType',
+                'displayName' => 'ComplexType',
+                'references' => [],
+                'attributes' => [
+                    'definition' => [
+                        'fields' => [
+                            ['name' => 'Items', 'dataType' => 'i=6', 'valueRank' => 1, 'isOptional' => false],
+                            ['name' => 'Extra', 'dataType' => 'i=12', 'valueRank' => -1, 'isOptional' => true],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $xml = $builder->build($nodes, []);
+
+        expect($xml)->toContain('ValueRank="1"');
+        expect($xml)->toContain('IsOptional="true"');
+    });
+
+    it('builds UAVariableType with DataType', function () {
+        $builder = new NodeSetXmlBuilder();
+        $nodes = [
+            [
+                'nodeId' => 'ns=1;i=7001',
+                'nodeClass' => NodeClass::VariableType->value,
+                'browseName' => '1:CustomVarType',
+                'displayName' => 'CustomVarType',
+                'references' => [],
+                'attributes' => ['DataType' => 'i=11'],
+            ],
+        ];
+
+        $xml = $builder->build($nodes, []);
+
+        expect($xml)->toContain('<UAVariableType');
+        expect($xml)->toContain('DataType="i=11"');
+    });
+
+    it('builds Definition with browseName containing namespace prefix', function () {
+        $builder = new NodeSetXmlBuilder();
+        $nodes = [
+            [
+                'nodeId' => 'ns=1;i=3060',
+                'nodeClass' => NodeClass::DataType->value,
+                'browseName' => '1:PrefixedType',
+                'displayName' => 'PrefixedType',
+                'references' => [],
+                'attributes' => [
+                    'definition' => [
+                        'fields' => [
+                            ['name' => 'Val', 'dataType' => 'i=6'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $xml = $builder->build($nodes, []);
+
+        // The Definition Name should strip the namespace prefix
+        expect($xml)->toContain('Name="PrefixedType"');
+    });
+
+    it('builds empty NamespaceUris section when no URIs', function () {
+        $builder = new NodeSetXmlBuilder();
+        $xml = $builder->build([], []);
+
+        expect($xml)->not->toContain('<NamespaceUris>');
+    });
+
     it('output is valid XML', function () {
         $builder = new NodeSetXmlBuilder();
         $nodes = [

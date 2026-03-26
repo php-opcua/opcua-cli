@@ -242,4 +242,39 @@ describe('CLI Integration', function () {
         @rmdir($storePath);
     })->group('integration');
 
+    it('handles UntrustedCertificateException via Application.run()', function () {
+        $storePath = sys_get_temp_dir() . '/opcua-cli-untrust-test-' . uniqid();
+        $certDir = TestHelper::getCertsDir();
+        $certPath = $certDir . '/client/cert.pem';
+        $keyPath = $certDir . '/client/key.pem';
+
+        $app = new Application();
+        $code = $app->run([
+            'opcua-cli',
+            'read',
+            TestHelper::ENDPOINT_ALL_SECURITY,
+            'i=2259',
+            '--security-policy=Basic256Sha256',
+            '--security-mode=SignAndEncrypt',
+            '--cert=' . $certPath,
+            '--key=' . $keyPath,
+            '--trust-store=' . $storePath,
+            '--trust-policy=fingerprint',
+            '--timeout=2',
+        ]);
+
+        expect($code)->toBe(1);
+
+        // Cleanup
+        foreach (glob($storePath . '/trusted/*.der') ?: [] as $f) {
+            @unlink($f);
+        }
+        foreach (glob($storePath . '/rejected/*.der') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($storePath . '/trusted');
+        @rmdir($storePath . '/rejected');
+        @rmdir($storePath);
+    })->group('integration');
+
 })->group('integration');

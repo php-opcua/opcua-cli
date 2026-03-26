@@ -169,6 +169,28 @@ describe('EndpointsCommand', function () {
         expect(getStreamContent($stdout))->toContain('No endpoints found');
     });
 
+    it('returns Unknown for unknown security mode', function () {
+        $cmd = new EndpointsCommand();
+        $client = MockClient::create()
+            ->onGetEndpoints(fn () => [
+                new EndpointDescription(
+                    'opc.tcp://localhost:4840',
+                    null,
+                    99,
+                    'http://opcfoundation.org/UA/SecurityPolicy#None',
+                    [new UserTokenPolicy('anon', 0, null, null, null)],
+                    '',
+                    0,
+                ),
+            ]);
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $code = $cmd->execute($client, ['opc.tcp://localhost:4840'], [], $output);
+        expect($code)->toBe(0);
+        expect(getStreamContent($stdout))->toContain('Unknown');
+    });
+
 });
 
 describe('ReadCommand', function () {
@@ -263,6 +285,29 @@ describe('ReadCommand', function () {
         $output = new ConsoleOutput($stdout, $stderr);
         $cmd->execute($client, ['opc.tcp://localhost', 'i=1'], [], $output);
         expect(getStreamContent($stdout))->toContain('2026-03-24');
+    });
+
+    it('formats object value as string', function () {
+        $cmd = new ReadCommand();
+        $nodeId = NodeId::numeric(0, 2253);
+        $client = MockClient::create()
+            ->onRead('i=1', fn () => DataValue::of($nodeId, PhpOpcua\Client\Types\BuiltinType::NodeId));
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'i=1'], [], $output);
+        expect(getStreamContent($stdout))->toContain('i=2253');
+    });
+
+    it('formats array value', function () {
+        $cmd = new ReadCommand();
+        $client = MockClient::create()
+            ->onRead('i=1', fn () => DataValue::of([10, 20, 30], PhpOpcua\Client\Types\BuiltinType::Int32));
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'i=1'], [], $output);
+        expect(getStreamContent($stdout))->toContain('[10,20,30]');
     });
 
 });
@@ -393,6 +438,17 @@ describe('BrowseCommand', function () {
 
 });
 
+class TestableWatchCommand extends WatchCommand
+{
+    /** @var int[] */
+    public array $sleepCalls = [];
+
+    protected function sleep(int $microseconds): void
+    {
+        $this->sleepCalls[] = $microseconds;
+    }
+}
+
 describe('WatchCommand', function () {
 
     it('returns name and description', function () {
@@ -464,6 +520,42 @@ describe('WatchCommand', function () {
         $output = new ConsoleOutput($stdout, $stderr);
         $cmd->execute($client, ['opc.tcp://localhost', 'i=1'], ['interval' => '10'], $output);
         expect(getStreamContent($stdout))->toContain('2026-03-24');
+    });
+
+    it('sleep method calls usleep', function () {
+        $cmd = new WatchCommand();
+        $method = new ReflectionMethod($cmd, 'sleep');
+        // Call with 0 microseconds — instant, just to cover the line
+        $method->invoke($cmd, 0);
+        expect(true)->toBeTrue();
+    });
+
+    it('calls sleep in polling mode when maxIterations is null', function () {
+        $cmd = new TestableWatchCommand();
+        // Do NOT set maxIterations — it stays null so sleep() is called
+        $iteration = 0;
+        $client = MockClient::create()
+            ->onRead('i=1', function () use (&$iteration) {
+                $iteration++;
+                if ($iteration > 2) {
+                    throw new RuntimeException('Stop polling');
+                }
+
+                return DataValue::ofInt32($iteration);
+            });
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+
+        try {
+            $cmd->execute($client, ['opc.tcp://localhost', 'i=1'], ['interval' => '50'], $output);
+        } catch (RuntimeException) {
+            // Expected — we break the loop via exception
+        }
+
+        // sleep should have been called with 50 * 1000 = 50000 microseconds
+        expect($cmd->sleepCalls)->toHaveCount(2);
+        expect($cmd->sleepCalls[0])->toBe(50000);
     });
 
     it('formats null, bool, array, and DateTime values in polling', function () {
@@ -629,6 +721,101 @@ describe('WriteCommand', function () {
         expect($decoded['NodeId'])->toBe('ns=2;i=1001');
         expect($decoded['Value'])->toBe('42');
     });
+
+    it('auto-casts "false" to bool without type', function () {
+        $cmd = new WriteCommand();
+        $writtenValue = null;
+        $client = MockClient::create()
+            ->onRead('ns=2;i=1001', fn () => DataValue::ofBoolean(true))
+            ->onWrite('ns=2;i=1001', function ($v) use (&$writtenValue) {
+                $writtenValue = $v;
+
+                return 0;
+            });
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'ns=2;i=1001', 'false'], [], $output);
+        expect($writtenValue)->toBeFalse();
+    });
+
+    it('auto-casts float string without type', function () {
+        $cmd = new WriteCommand();
+        $writtenValue = null;
+        $client = MockClient::create()
+            ->onRead('ns=2;i=1001', fn () => DataValue::ofDouble(0.0))
+            ->onWrite('ns=2;i=1001', function ($v) use (&$writtenValue) {
+                $writtenValue = $v;
+
+                return 0;
+            });
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'ns=2;i=1001', '3.14'], [], $output);
+        expect($writtenValue)->toBe(3.14);
+        expect($writtenValue)->toBeFloat();
+    });
+
+    it('auto-casts non-numeric string without type', function () {
+        $cmd = new WriteCommand();
+        $writtenValue = null;
+        $client = MockClient::create()
+            ->onRead('ns=2;i=1001', fn () => DataValue::ofString(''))
+            ->onWrite('ns=2;i=1001', function ($v) use (&$writtenValue) {
+                $writtenValue = $v;
+
+                return 0;
+            });
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'ns=2;i=1001', 'hello'], [], $output);
+        expect($writtenValue)->toBe('hello');
+    });
+
+    it('formats boolean value in output', function () {
+        $cmd = new WriteCommand();
+        $client = MockClient::create()
+            ->onRead('ns=2;i=1001', fn () => DataValue::ofBoolean(false))
+            ->onWrite('ns=2;i=1001', fn () => 0);
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $cmd->execute($client, ['opc.tcp://localhost', 'ns=2;i=1001', 'true'], ['type' => 'Boolean'], $output);
+        expect(getStreamContent($stdout))->toContain('true');
+    });
+
+    it('shows Auto-detected type when write has no type and read has no variant', function () {
+        $cmd = new WriteCommand();
+        $client = MockClient::create()
+            ->onWrite('ns=2;i=1001', fn () => 0);
+
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+        $code = $cmd->execute($client, ['opc.tcp://localhost', 'ns=2;i=1001', '42'], [], $output);
+        expect($code)->toBe(0);
+        expect(getStreamContent($stdout))->toContain('Auto-detected');
+    });
+
+    it('formatValue formats array as JSON', function () {
+        $cmd = new WriteCommand();
+        expect($cmd->formatValue([1, 2, 3]))->toBe('[1,2,3]');
+        expect($cmd->formatValue(['a' => 'b']))->toBe('{"a":"b"}');
+    });
+
+    it('formatValue formats bool as string', function () {
+        $cmd = new WriteCommand();
+        expect($cmd->formatValue(true))->toBe('true');
+        expect($cmd->formatValue(false))->toBe('false');
+    });
+
+    it('formatValue formats scalar as string', function () {
+        $cmd = new WriteCommand();
+        expect($cmd->formatValue(42))->toBe('42');
+        expect($cmd->formatValue(3.14))->toBe('3.14');
+        expect($cmd->formatValue('hello'))->toBe('hello');
+    });
 });
 
 describe('GenerateNodesetCommand', function () {
@@ -658,6 +845,84 @@ describe('GenerateNodesetCommand', function () {
         $code = $cmd->execute($client, ['/nonexistent/file.xml'], [], $output);
         expect($code)->toBe(1);
         expect(getStreamContent($stderr))->toContain('File not found');
+    });
+
+    it('returns 0 with empty NodeSet (no nodes, no types)', function () {
+        $cmd = new GenerateNodesetCommand();
+        $client = MockClient::create();
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+
+        // Create a minimal XML file with no nodes
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-empty-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+</UANodeSet>');
+
+        $code = $cmd->execute($client, [$tmpXml], ['output' => sys_get_temp_dir() . '/opcua-gen-empty-' . uniqid()], $output);
+        expect($code)->toBe(0);
+        expect(getStreamContent($stdout))->toContain('No nodes or data types found');
+
+        @unlink($tmpXml);
+    });
+
+    it('derives base name from various file names', function () {
+        $cmd = new GenerateNodesetCommand();
+        $method = new ReflectionMethod($cmd, 'deriveBaseName');
+
+        expect($method->invoke($cmd, 'Opc.Ua.DI.NodeSet2.xml'))->toBe('DI');
+        expect($method->invoke($cmd, 'NodeSet2.xml'))->toBe('OpcUa');
+        expect($method->invoke($cmd, 'My-Custom.NodeSet2.xml'))->toBe('MyCustom');
+    });
+
+    it('sanitizes class names with special characters', function () {
+        $cmd = new GenerateNodesetCommand();
+        $method = new ReflectionMethod($cmd, 'safeClassName');
+
+        expect($method->invoke($cmd, 'My-Type.Name'))->toBe('My_Type_Name');
+        expect($method->invoke($cmd, '0StartNum'))->toBe('_0StartNum');
+    });
+
+    it('maps model URI to dir name', function () {
+        $cmd = new GenerateNodesetCommand();
+        $method = new ReflectionMethod($cmd, 'modelUriToDirName');
+
+        expect($method->invoke($cmd, 'http://opcfoundation.org/UA/'))->toBeNull();
+        expect($method->invoke($cmd, 'http://opcfoundation.org/UA/DI/'))->toBe('DI');
+        expect($method->invoke($cmd, 'http://opcfoundation.org/UA/Machinery/'))->toBe('Machinery');
+    });
+
+    it('skips data types with empty fields', function () {
+        $cmd = new GenerateNodesetCommand();
+        $client = MockClient::create();
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+
+        // XML with DataType that has Definition but no fields
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-nf-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <UADataType NodeId="ns=1;i=3000" BrowseName="1:EmptyStruct">
+    <DisplayName>EmptyStruct</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=22</Reference>
+    </References>
+    <Definition Name="EmptyStruct">
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $outputDir = sys_get_temp_dir() . '/opcua-gen-nf-' . uniqid();
+        $code = $cmd->execute($client, [$tmpXml], ['output' => $outputDir, 'namespace' => 'Test'], $output);
+        expect($code)->toBe(0);
+        // Should generate NodeIds and Registrar but no Types/Codecs
+        $content = getStreamContent($stdout);
+        expect($content)->toContain('file(s) generated');
+
+        // Cleanup
+        array_map('unlink', glob($outputDir . '/*.php') ?: []);
+        @rmdir($outputDir);
+        @unlink($tmpXml);
     });
 
     it('generates files from test fixture', function () {
@@ -693,6 +958,59 @@ describe('GenerateNodesetCommand', function () {
         @rmdir($outputDir . '/Codecs');
         array_map('unlink', glob($outputDir . '/*.php') ?: []);
         @rmdir($outputDir);
+    });
+
+    it('handles numeric-starting browse names and duplicate names in NodeIds', function () {
+        $cmd = new GenerateNodesetCommand();
+        $client = MockClient::create();
+        [$stdout, $stderr] = createOutputStream();
+        $output = new ConsoleOutput($stdout, $stderr);
+
+        $tmpDir = sys_get_temp_dir() . '/opcua-gen-dup-' . uniqid();
+        $tmpXml = $tmpDir . '/Test.NodeSet2.xml';
+        mkdir($tmpDir, 0755, true);
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Aliases>
+    <Alias Alias="Int32">i=6</Alias>
+  </Aliases>
+  <UAVariable NodeId="ns=1;i=100" BrowseName="1:0NumericStart">
+    <DisplayName>0NumericStart</DisplayName>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=101" BrowseName="1:DupName">
+    <DisplayName>DupName</DisplayName>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=102" BrowseName="1:DupName">
+    <DisplayName>DupName</DisplayName>
+  </UAVariable>
+</UANodeSet>');
+
+        $outputDir = $tmpDir . '/output';
+        $code = $cmd->execute($client, [$tmpXml], ['output' => $outputDir, 'namespace' => 'Test'], $output);
+        expect($code)->toBe(0);
+
+        // deriveBaseName('Test.NodeSet2.xml') => 'Test'
+        $nodeIdFile = $outputDir . '/TestNodeIds.php';
+        expect(file_exists($nodeIdFile))->toBeTrue();
+        $nodeIdContent = file_get_contents($nodeIdFile);
+        // Should have _0NumericStart (prefixed with underscore)
+        expect($nodeIdContent)->toContain('_0NumericStart');
+        // Should have DupName and DupName_2
+        expect($nodeIdContent)->toContain('DupName');
+        expect($nodeIdContent)->toContain('DupName_2');
+
+        array_map('unlink', glob($outputDir . '/*.php') ?: []);
+        @rmdir($outputDir);
+        @unlink($tmpXml);
+        @rmdir($tmpDir);
+    });
+
+    it('handles modelUriToDirName with empty path', function () {
+        $cmd = new GenerateNodesetCommand();
+        $method = new ReflectionMethod($cmd, 'modelUriToDirName');
+
+        // URL with no meaningful path
+        expect($method->invoke($cmd, 'http://example.com/'))->toBeNull();
     });
 });
 

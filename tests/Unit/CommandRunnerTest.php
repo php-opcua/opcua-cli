@@ -102,4 +102,79 @@ describe('CommandRunner', function () {
         expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
     });
 
+    it('creates a client with security-policy full URI', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder([
+            'security-policy' => 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+        ], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
+    it('creates a client with cert and key', function () {
+        $certFile = tempnam(sys_get_temp_dir(), 'opcua-cert-');
+        $keyFile = tempnam(sys_get_temp_dir(), 'opcua-key-');
+        file_put_contents($certFile, 'fake-cert');
+        file_put_contents($keyFile, 'fake-key');
+
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder([
+            'cert' => $certFile,
+            'key' => $keyFile,
+        ], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+
+        @unlink($certFile);
+        @unlink($keyFile);
+    });
+
+    it('creates a client with cert, key and ca', function () {
+        $certFile = tempnam(sys_get_temp_dir(), 'opcua-cert-');
+        $keyFile = tempnam(sys_get_temp_dir(), 'opcua-key-');
+        $caFile = tempnam(sys_get_temp_dir(), 'opcua-ca-');
+
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder([
+            'cert' => $certFile,
+            'key' => $keyFile,
+            'ca' => $caFile,
+        ], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+
+        @unlink($certFile);
+        @unlink($keyFile);
+        @unlink($caFile);
+    });
+
+    it('creates a client with no-trust-policy option', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['no-trust-policy' => true], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+        expect($client->getTrustPolicy())->toBeNull();
+    });
+
+    it('creates a client with trust-store path', function () {
+        $storePath = sys_get_temp_dir() . '/opcua-test-store-' . uniqid();
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['trust-store' => $storePath], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+        expect($client->getTrustStore())->not->toBeNull();
+
+        // Cleanup
+        @rmdir($storePath . '/trusted');
+        @rmdir($storePath . '/rejected');
+        @rmdir($storePath);
+    });
+
+    it('creates a client with trust-policy option', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['trust-policy' => 'all'], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
 });

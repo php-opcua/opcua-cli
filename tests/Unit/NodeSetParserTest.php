@@ -170,4 +170,158 @@ describe('NodeSetParser', function () use ($fixturePath) {
         expect(fn () => $parser->parse('/nonexistent/file.xml'))
             ->toThrow(RuntimeException::class);
     });
+
+    it('parses DataType without Definition as a node only', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <UADataType NodeId="ns=1;i=9000" BrowseName="1:SimpleType">
+    <DisplayName>SimpleType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=22</Reference>
+    </References>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $nodes = $parser->getNodes();
+        expect($nodes)->toHaveKey('ns=1;i=9000');
+        expect($nodes['ns=1;i=9000']['type'])->toBe('UADataType');
+        expect($nodes['ns=1;i=9000']['browseName'])->toBe('SimpleType');
+
+        $dataTypes = $parser->getDataTypes();
+        expect($dataTypes)->not->toHaveKey('ns=1;i=9000');
+
+        @unlink($tmpXml);
+    });
+
+    it('returns null encoding when no HasEncoding reference', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Aliases>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;i=9001" BrowseName="1:NoEncodingType">
+    <DisplayName>NoEncodingType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=22</Reference>
+    </References>
+    <Definition Name="NoEncodingType">
+      <Field Name="Value" DataType="Double" />
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $dataTypes = $parser->getDataTypes();
+        expect($dataTypes)->toHaveKey('ns=1;i=9001');
+        expect($dataTypes['ns=1;i=9001']['encodingId'])->toBeNull();
+
+        @unlink($tmpXml);
+    });
+
+    it('resolves builtin type names directly without alias', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <UADataType NodeId="ns=1;i=9002" BrowseName="1:DirectTypes">
+    <DisplayName>DirectTypes</DisplayName>
+    <Definition Name="DirectTypes">
+      <Field Name="Id" DataType="Guid" />
+      <Field Name="Data" DataType="ByteString" />
+      <Field Name="Ts" DataType="DateTime" />
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $dataTypes = $parser->getDataTypes();
+        expect($dataTypes['ns=1;i=9002']['fields'][0]['dataType'])->toBe('i=14');  // Guid
+        expect($dataTypes['ns=1;i=9002']['fields'][1]['dataType'])->toBe('i=15');  // ByteString
+        expect($dataTypes['ns=1;i=9002']['fields'][2]['dataType'])->toBe('i=13');  // DateTime
+
+        @unlink($tmpXml);
+    });
+
+    it('handles backward reference in findEncodingId', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Aliases>
+    <Alias Alias="HasEncoding">i=38</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;i=9003" BrowseName="1:BackwardEnc">
+    <DisplayName>BackwardEnc</DisplayName>
+    <References>
+      <Reference ReferenceType="HasEncoding" IsForward="false">ns=1;i=9999</Reference>
+    </References>
+    <Definition Name="BackwardEnc">
+      <Field Name="Val" DataType="Double" />
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $dataTypes = $parser->getDataTypes();
+        // Backward HasEncoding should not be picked up
+        expect($dataTypes['ns=1;i=9003']['encodingId'])->toBeNull();
+
+        @unlink($tmpXml);
+    });
+
+    it('resolves unknown data type reference as-is', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <UADataType NodeId="ns=1;i=9004" BrowseName="1:CustomRef">
+    <DisplayName>CustomRef</DisplayName>
+    <Definition Name="CustomRef">
+      <Field Name="Custom" DataType="ns=2;i=5555" />
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $dataTypes = $parser->getDataTypes();
+        expect($dataTypes['ns=1;i=9004']['fields'][0]['dataType'])->toBe('ns=2;i=5555');
+
+        @unlink($tmpXml);
+    });
+
+    it('sanitizes field names with special chars', function () {
+        $tmpXml = tempnam(sys_get_temp_dir(), 'opcua-parser-') . '.xml';
+        file_put_contents($tmpXml, '<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Aliases>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;i=9005" BrowseName="1:SpecialFields">
+    <DisplayName>SpecialFields</DisplayName>
+    <Definition Name="SpecialFields">
+      <Field Name="My-Field.Name" DataType="Double" />
+    </Definition>
+  </UADataType>
+</UANodeSet>');
+
+        $parser = new NodeSetParser();
+        $parser->parse($tmpXml);
+
+        $dataTypes = $parser->getDataTypes();
+        expect($dataTypes['ns=1;i=9005']['fields'][0]['name'])->toBe('My_Field_Name');
+
+        @unlink($tmpXml);
+    });
 });

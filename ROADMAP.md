@@ -12,6 +12,7 @@
 - [x] NodeSet2.xml code generator: typed DTOs, PHP enums, binary codecs, registrar
 - [x] Server address space dump to NodeSet2.xml
 - [x] Server certificate trust management from the terminal
+- [x] **272 tests** (253 unit + 19 integration), 592 assertions, 99.9% code coverage
 
 ## Planned
 

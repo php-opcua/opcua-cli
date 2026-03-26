@@ -117,24 +117,46 @@ class Application
 
             return $exitCode;
         } catch (UntrustedCertificateException $e) {
-            $output->error('Error: Server certificate not trusted.');
-            $output->error('  Fingerprint: ' . $e->fingerprint);
-            $output->writeln('');
-            $output->writeln('To trust this certificate, run:');
-            $output->writeln('  opcua-cli trust ' . ($parsed['arguments'][0] ?? '<endpoint>'));
-            $output->writeln('');
-            $output->writeln('To list trusted certificates:');
-            $output->writeln('  opcua-cli trust:list');
-            $output->writeln('');
-            $output->writeln('To skip trust validation for this command:');
-            $output->writeln('  opcua-cli ' . ($parsed['command'] ?? '') . ' ... --no-trust-policy');
-
-            return 1;
+            return $this->handleUntrustedCertificate($e, $output, $parsed['arguments'][0] ?? '<endpoint>', $parsed['command'] ?? '');
         } catch (OpcUaException $e) {
-            $output->error('Error: ' . $e->getMessage());
-
-            return 1;
+            return $this->handleOpcUaException($e, $output);
         }
+    }
+
+    /**
+     * @param UntrustedCertificateException $e
+     * @param OutputInterface $output
+     * @param string $endpointUrl
+     * @param string $commandName
+     * @return int
+     */
+    public function handleUntrustedCertificate(UntrustedCertificateException $e, OutputInterface $output, string $endpointUrl, string $commandName): int
+    {
+        $output->error('Error: Server certificate not trusted.');
+        $output->error('  Fingerprint: ' . $e->fingerprint);
+        $output->writeln('');
+        $output->writeln('To trust this certificate, run:');
+        $output->writeln('  opcua-cli trust ' . $endpointUrl);
+        $output->writeln('');
+        $output->writeln('To list trusted certificates:');
+        $output->writeln('  opcua-cli trust:list');
+        $output->writeln('');
+        $output->writeln('To skip trust validation for this command:');
+        $output->writeln('  opcua-cli ' . $commandName . ' ... --no-trust-policy');
+
+        return 1;
+    }
+
+    /**
+     * @param OpcUaException $e
+     * @param OutputInterface $output
+     * @return int
+     */
+    public function handleOpcUaException(OpcUaException $e, OutputInterface $output): int
+    {
+        $output->error('Error: ' . $e->getMessage());
+
+        return 1;
     }
 
     /**

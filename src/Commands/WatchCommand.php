@@ -101,7 +101,7 @@ class WatchCommand implements CommandInterface
             if ($this->maxIterations !== null) {
                 continue;
             }
-            usleep($intervalMs * 1000);
+            $this->sleep($intervalMs * 1000);
         }
 
         return 0;
@@ -144,6 +144,15 @@ class WatchCommand implements CommandInterface
         }
 
         return 0;
+    }
+
+    /**
+     * @param int $microseconds
+     * @return void
+     */
+    protected function sleep(int $microseconds): void
+    {
+        usleep($microseconds);
     }
 
     /**

@@ -444,6 +444,30 @@ The dump output can be fed directly into generate:nodeset for end-to-end code ge
 
 ---
 
+## 8. Testing
+
+272 tests (253 unit + 19 integration), 592 assertions, 99.9% code coverage. Code coverage must remain >= 99.5% on every pull request.
+
+Tests use [Pest PHP](https://pestphp.com/) and [pcov](https://github.com/krakjoe/pcov) for coverage.
+
+```bash
+# All tests
+./vendor/bin/pest
+
+# Unit tests only
+./vendor/bin/pest tests/Unit/
+
+# Integration tests (requires opcua-test-suite running)
+./vendor/bin/pest tests/Integration/ --group=integration
+
+# With coverage report
+php -d pcov.enabled=1 ./vendor/bin/pest --coverage
+```
+
+Unit tests mock the OPC UA client via `PhpOpcua\Client\Testing\MockClient`. Integration tests connect to the [opcua-test-suite](https://github.com/php-opcua/opcua-test-suite) Docker containers.
+
+---
+
 ## Related Packages
 
 - php-opcua/opcua-client: pure PHP OPC UA client library — the foundation this CLI is built on

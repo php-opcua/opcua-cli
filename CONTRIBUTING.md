@@ -35,6 +35,8 @@ docker compose up -d
 
 ## Running Tests
 
+The project currently has **272 tests** (253 unit + 19 integration) with 592 assertions and **99.9% code coverage**.
+
 ```bash
 # All tests
 ./vendor/bin/pest
@@ -48,7 +50,7 @@ docker compose up -d
 # A specific test file
 ./vendor/bin/pest tests/Unit/ArgvParserTest.php
 
-# With coverage report
+# With coverage report (requires pcov)
 php -d pcov.enabled=1 ./vendor/bin/pest --coverage
 ```
 
@@ -163,6 +165,7 @@ composer format:check
 - Use Pest PHP syntax (not PHPUnit)
 - Group integration tests with `->group('integration')`
 - Use `TestHelper::safeDisconnect()` in `finally` blocks for integration tests
+- **Code coverage must remain >= 99.5%.** Run `php -d pcov.enabled=1 ./vendor/bin/pest --coverage` and verify the total before submitting. Pull requests that drop coverage below this threshold will not be merged
 
 ### Commits
 

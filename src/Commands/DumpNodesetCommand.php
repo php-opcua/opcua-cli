@@ -271,7 +271,7 @@ class DumpNodesetCommand implements CommandInterface
      * @param NodeId $nodeId
      * @return ?array
      */
-    private function readDataTypeDefinition(OpcUaClientInterface $client, NodeId $nodeId): ?array
+    public function readDataTypeDefinition(OpcUaClientInterface $client, NodeId $nodeId): ?array
     {
         try {
             $dv = $client->read($nodeId, AttributeId::DataTypeDefinition);
@@ -301,7 +301,7 @@ class DumpNodesetCommand implements CommandInterface
      * @param NodeId $nodeId
      * @return ?array
      */
-    private function findDefinitionFromDiscovery(OpcUaClientInterface $client, NodeId $nodeId): ?array
+    public function findDefinitionFromDiscovery(OpcUaClientInterface $client, NodeId $nodeId): ?array
     {
         try {
             $refs = $client->browseAll($nodeId);
@@ -450,7 +450,7 @@ class DumpNodesetCommand implements CommandInterface
      * @param \PhpOpcua\Client\Encoding\BinaryDecoder $decoder
      * @return ?array
      */
-    private function parseRawDefinition(\PhpOpcua\Client\Encoding\BinaryDecoder $decoder): ?array
+    public function parseRawDefinition(\PhpOpcua\Client\Encoding\BinaryDecoder $decoder): ?array
     {
         try {
             $parsed = \PhpOpcua\Client\Encoding\StructureDefinitionParser::parse($decoder);
