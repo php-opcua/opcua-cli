@@ -277,6 +277,8 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 | [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) | Pure PHP OPC UA client library |
 | **`php-opcua/opcua-cli`** | **CLI tool (this package)** |
 | [`php-opcua/opcua-client-nodeset`](https://github.com/php-opcua/opcua-client-nodeset) | Pre-built NodeSet2 types for 51 OPC UA companion specifications |
+| [`php-opcua/laravel-opcua`](https://github.com/php-opcua/laravel-opcua) | Laravel integration — service provider, facade, config |
+| [`php-opcua/uanetstandard-test-suite`](https://github.com/php-opcua/uanetstandard-test-suite) | Docker-based OPC UA test servers (UA-.NETStandard) for integration testing |
 
 ## Testing
 
