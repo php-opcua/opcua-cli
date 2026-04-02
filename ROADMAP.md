@@ -2,6 +2,12 @@
 
 > **Versioning:** This package follows the same version numbering as [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client). Each CLI release is aligned with the corresponding client library release.
 
+## v4.0.1 — 2026-04-02
+
+- [x] **Migrated test infrastructure to [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite)** — integration tests now run against the OPC Foundation's UA-.NETStandard reference implementation instead of node-opcua
+- [x] Updated GitHub Actions workflow to `php-opcua/uanetstandard-test-suite@v1.0.0`
+- [x] Fixed `trust` CLI integration test — the no-security server (.NET) correctly does not expose a certificate with `SecurityPolicy=None`, test now uses the all-security server (port 4843)
+
 ## v4.0.0 — 2026-03-29
 
 - [x] Extracted CLI tool from [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) into a standalone package
