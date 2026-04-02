@@ -457,14 +457,14 @@ Tests use [Pest PHP](https://pestphp.com/) and [pcov](https://github.com/krakjoe
 # Unit tests only
 ./vendor/bin/pest tests/Unit/
 
-# Integration tests (requires opcua-test-suite running)
+# Integration tests (requires uanetstandard-test-suite running)
 ./vendor/bin/pest tests/Integration/ --group=integration
 
 # With coverage report
 php -d pcov.enabled=1 ./vendor/bin/pest --coverage
 ```
 
-Unit tests mock the OPC UA client via `PhpOpcua\Client\Testing\MockClient`. Integration tests connect to the [opcua-test-suite](https://github.com/php-opcua/opcua-test-suite) Docker containers.
+Unit tests mock the OPC UA client via `PhpOpcua\Client\Testing\MockClient`. Integration tests connect to the [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) Docker containers.
 
 ---
 

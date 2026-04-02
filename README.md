@@ -280,6 +280,18 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 
 ## Testing
 
+<table>
+<tr>
+<td>
+
+### Tested against the OPC UA reference implementation
+
+Integration tests run via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification. This is the same stack used by major industrial vendors to certify their products, giving you the highest confidence that every CLI command works correctly against real-world OPC UA servers.
+
+</td>
+</tr>
+</table>
+
 The project includes 272 tests (253 unit + 19 integration) with 592 assertions and **99.9% code coverage**.
 
 ```bash

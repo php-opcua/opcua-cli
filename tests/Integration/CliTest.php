@@ -206,7 +206,7 @@ describe('CLI Integration', function () {
         $storePath = sys_get_temp_dir() . '/opcua-cli-trust-integ-' . uniqid();
         $app = new Application();
         $code = $app->run([
-            'opcua-cli', 'trust', TestHelper::ENDPOINT_NO_SECURITY,
+            'opcua-cli', 'trust', TestHelper::ENDPOINT_ALL_SECURITY,
             '--trust-store=' . $storePath,
             '--trust-policy=fingerprint',
         ]);

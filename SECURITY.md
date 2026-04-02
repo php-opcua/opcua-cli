@@ -29,7 +29,7 @@ This policy covers the `php-opcua/opcua-cli` package itself. For vulnerabilities
 - [opcua-client](https://github.com/php-opcua/opcua-client)
 - [opcua-session-manager](https://github.com/php-opcua/opcua-session-manager)
 - [laravel-opcua](https://github.com/php-opcua/laravel-opcua)
-- [opcua-test-suite](https://github.com/php-opcua/opcua-test-suite)
+- [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite)
 
 ## Security Considerations
 
