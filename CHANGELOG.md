@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.2] - 2026-04-07
+
+### Added
+
+- **AI-Ready documentation.** Added `llms-skills.md` with 11 task-oriented recipes for AI coding assistants (browse, read, write, watch, security, trust management, code generation, address space export, JSON scripting, endpoint discovery, global options). Designed to be fed to Claude, Cursor, Copilot, ChatGPT, and other AI tools so they can generate correct CLI commands from a user's intent.
+- Added AI-Ready section to README with instructions for integrating with Claude Code, Cursor, GitHub Copilot, and other AI tools.
+
 ## [4.0.1] - 2026-04-02
 
 ### Changed

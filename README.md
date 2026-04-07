@@ -274,11 +274,12 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 
 | Package | Description |
 |---------|-------------|
-| [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) | Pure PHP OPC UA client library |
-| **`php-opcua/opcua-cli`** | **CLI tool (this package)** |
-| [`php-opcua/opcua-client-nodeset`](https://github.com/php-opcua/opcua-client-nodeset) | Pre-built NodeSet2 types for 51 OPC UA companion specifications |
-| [`php-opcua/laravel-opcua`](https://github.com/php-opcua/laravel-opcua) | Laravel integration — service provider, facade, config |
-| [`php-opcua/uanetstandard-test-suite`](https://github.com/php-opcua/uanetstandard-test-suite) | Docker-based OPC UA test servers (UA-.NETStandard) for integration testing |
+| [opcua-client](https://github.com/php-opcua/opcua-client) | Pure PHP OPC UA client |
+| [opcua-cli](https://github.com/php-opcua/opcua-cli) | CLI tool — browse, read, write, watch, discover endpoints, manage certificates, generate code from NodeSet2.xml (this package) |
+| [opcua-session-manager](https://github.com/php-opcua/opcua-session-manager) | Daemon-based session persistence across PHP requests. Keeps OPC UA connections alive between short-lived PHP processes via a ReactPHP daemon and Unix sockets. Separate package by design — see [ROADMAP.md](ROADMAP.md#session-manager-integration-here) for rationale. |
+| [opcua-client-nodeset](https://github.com/php-opcua/opcua-client-nodeset) | Pre-generated PHP types from 51 OPC Foundation companion specifications (DI, Robotics, Machinery, MachineTool, ISA-95, CNC, MTConnect, and more). 807 PHP files — NodeId constants, enums, typed DTOs, codecs, registrars with automatic dependency resolution. Just `composer require` and `loadGeneratedTypes()`. |
+| [laravel-opcua](https://github.com/php-opcua/laravel-opcua) | Laravel integration — service provider, facade, config |
+| [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) | Docker-based OPC UA test servers (UA-.NETStandard) for integration testing |
 
 ## Testing
 
@@ -288,28 +289,45 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 
 ### Tested against the OPC UA reference implementation
 
-Integration tests run via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification. This is the same stack used by major industrial vendors to certify their products, giving you the highest confidence that every CLI command works correctly against real-world OPC UA servers.
+The underlying [opcua-client](https://github.com/php-opcua/opcua-client) is integration-tested against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification. This is the same stack used by major industrial vendors to certify their products.
+
+This CLI tool is additionally integration-tested via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite), verifying that every command works correctly against real-world OPC UA servers.
 
 </td>
 </tr>
 </table>
 
-The project includes 272 tests (253 unit + 19 integration) with 592 assertions and **99.9% code coverage**.
+272 tests (253 unit + 19 integration) with **99.9% code coverage**. Integration tests run against [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) — a Docker-based OPC UA environment built on the OPC Foundation's UA-.NETStandard reference implementation.
 
 ```bash
-# Run all tests
-./vendor/bin/pest
-
-# Run with coverage report (requires pcov)
-php -d pcov.enabled=1 ./vendor/bin/pest --coverage
+./vendor/bin/pest                                          # everything
+./vendor/bin/pest tests/Unit/                              # unit only
+./vendor/bin/pest tests/Integration/ --group=integration   # integration only
 ```
 
-Code coverage must remain >= 99.5%. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+CI runs on PHP 8.2, 8.3, 8.4, and 8.5 via GitHub Actions.
 
 ## Requirements
 
 - PHP >= 8.2
 - [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client)
+
+## AI-Ready
+
+This package ships with machine-readable documentation designed for AI coding assistants (Claude, Cursor, Copilot, ChatGPT, and others). Feed these files to your AI so it knows how to use the CLI tool correctly:
+
+| File | Purpose |
+|------|---------|
+| [`llms.txt`](llms.txt) | Compact project summary — commands, options, architecture. Optimized for LLM context windows with minimal token usage. |
+| [`llms-full.txt`](llms-full.txt) | Comprehensive technical reference — every command, option, class, code generator, output system. For deep dives and complex questions. |
+| [`llms-skills.md`](llms-skills.md) | Task-oriented recipes — step-by-step instructions for common tasks (browse, read, write, watch, security, trust, code generation, scripting). Written so an AI can generate correct commands from a user's intent. |
+
+**How to use:** copy the files you need into your project's AI configuration directory. The files are located in `vendor/php-opcua/opcua-cli/` after `composer install`.
+
+- **Claude Code**: reference per-session with `--add-file vendor/php-opcua/opcua-cli/llms-skills.md`
+- **Cursor**: copy into your project's rules directory — `cp vendor/php-opcua/opcua-cli/llms-skills.md .cursor/rules/opcua-cli.md`
+- **GitHub Copilot**: copy or append the content into your project's `.github/copilot-instructions.md` file (create the file and directory if they don't exist). Copilot reads this file automatically for project-specific context
+- **Other tools**: paste the content into your system prompt, project knowledge base, or context configuration
 
 ## Versioning
 
