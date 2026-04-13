@@ -121,7 +121,7 @@ Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+exp
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| --security-policy=POLICY | -s | None, Basic256Sha256, Aes256Sha256RsaPss, etc. |
+| --security-policy=POLICY | -s | None, Basic128Rsa15, Basic256, Basic256Sha256, Aes128Sha256RsaOaep, Aes256Sha256RsaPss, ECC_nistP256, ECC_nistP384, ECC_brainpoolP256r1, ECC_brainpoolP384r1 |
 | --security-mode=MODE | -m | None, Sign, SignAndEncrypt |
 | --cert=PATH | | Client certificate |
 | --key=PATH | | Client private key |
@@ -170,7 +170,7 @@ Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+exp
 
 ## Testing
 
-272 tests (253 unit + 19 integration), 592 assertions, 99.9% code coverage. Coverage must remain >= 99.5%.
+288 tests (258 unit + 30 integration), 99.9% code coverage. Coverage must remain >= 99.5%.
 
 ```
 ./vendor/bin/pest

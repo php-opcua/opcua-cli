@@ -44,7 +44,7 @@
   ],
   "require": {
     "php": "^8.2",
-    "php-opcua/opcua-client": "^4.0"
+    "php-opcua/opcua-client": "^4.1"
   },
   "require-dev": {
     "pestphp/pest": "^3.0",

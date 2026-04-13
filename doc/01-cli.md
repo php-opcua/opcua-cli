@@ -265,7 +265,7 @@ All commands support full security configuration:
 # Username/password authentication
 opcua-cli read opc.tcp://server:4840 "i=2259" -u admin -p secret
 
-# Full security with certificates
+# Full security with RSA certificates
 opcua-cli read opc.tcp://server:4840 "i=2259" \
   --security-policy=Basic256Sha256 \
   --security-mode=SignAndEncrypt \
@@ -273,11 +273,19 @@ opcua-cli read opc.tcp://server:4840 "i=2259" \
   --key=/path/to/client.key \
   --ca=/path/to/ca.pem \
   -u operator -p secret
+
+# ECC security (auto-generated ECC certificate)
+opcua-cli read opc.tcp://server:4840 "i=2259" \
+  --security-policy=ECC_nistP256 \
+  --security-mode=SignAndEncrypt \
+  -u operator -p secret
 ```
+
+> **ECC disclaimer:** ECC security policies (`ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1`) are fully implemented and tested against the OPC Foundation's UA-.NETStandard reference stack. However, no commercial OPC UA vendor supports ECC endpoints yet. When using ECC, client certificates are auto-generated if `--cert`/`--key` are omitted, and username/password authentication uses the `EccEncryptedSecret` protocol automatically.
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--security-policy=<policy>` | `-s` | None, Basic256Sha256, Aes256Sha256RsaPss, etc. |
+| `--security-policy=<policy>` | `-s` | None, Basic128Rsa15, Basic256, Basic256Sha256, Aes128Sha256RsaOaep, Aes256Sha256RsaPss, ECC_nistP256, ECC_nistP384, ECC_brainpoolP256r1, ECC_brainpoolP384r1 |
 | `--security-mode=<mode>` | `-m` | None, Sign, SignAndEncrypt |
 | `--cert=<path>` | | Client certificate path |
 | `--key=<path>` | | Client private key path |

@@ -111,6 +111,36 @@ describe('CommandRunner', function () {
         expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
     });
 
+    it('creates a client with ECC_nistP256 security-policy', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['security-policy' => 'ECC_nistP256'], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
+    it('creates a client with ECC_nistP384 security-policy', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['security-policy' => 'ECC_nistP384'], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
+    it('creates a client with ECC_brainpoolP256r1 security-policy', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder(['security-policy' => 'ECC_brainpoolP256r1'], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
+    it('creates a client with ECC_brainpoolP384r1 security-policy full URI', function () {
+        $runner = new CommandRunner();
+        $output = new ConsoleOutput(fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+'), STDERR);
+        $client = $runner->createClientBuilder([
+            'security-policy' => 'http://opcfoundation.org/UA/SecurityPolicy#ECC_brainpoolP384r1',
+        ], $output);
+        expect($client)->toBeInstanceOf(PhpOpcua\Client\ClientBuilder::class);
+    });
+
     it('creates a client with cert and key', function () {
         $certFile = tempnam(sys_get_temp_dir(), 'opcua-cert-');
         $keyFile = tempnam(sys_get_temp_dir(), 'opcua-key-');

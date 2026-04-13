@@ -300,7 +300,7 @@ All commands that connect to a server support full OPC UA security configuration
 # Username/password authentication
 opcua-cli read opc.tcp://server:4840 "i=2259" -u admin -p secret
 
-# Full security with certificates
+# Full security with RSA certificates
 opcua-cli read opc.tcp://server:4840 "i=2259" \
   --security-policy=Basic256Sha256 \
   --security-mode=SignAndEncrypt \
@@ -308,11 +308,19 @@ opcua-cli read opc.tcp://server:4840 "i=2259" \
   --key=/path/to/client.key \
   --ca=/path/to/ca.pem \
   -u operator -p secret
+
+# ECC security (auto-generated ECC certificate)
+opcua-cli read opc.tcp://server:4840 "i=2259" \
+  --security-policy=ECC_nistP256 \
+  --security-mode=SignAndEncrypt \
+  -u operator -p secret
 ```
+
+> **ECC disclaimer:** ECC security policies (`ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1`) are fully implemented and tested against the OPC Foundation's UA-.NETStandard reference stack. No commercial OPC UA vendor supports ECC endpoints yet. ECC certificates are auto-generated when `--cert`/`--key` are omitted. Username/password uses `EccEncryptedSecret` automatically.
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--security-policy=POLICY` | `-s` | None, Basic128Rsa15, Basic256, Basic256Sha256, Aes128Sha256RsaOaep, Aes256Sha256RsaPss |
+| `--security-policy=POLICY` | `-s` | None, Basic128Rsa15, Basic256, Basic256Sha256, Aes128Sha256RsaOaep, Aes256Sha256RsaPss, ECC_nistP256, ECC_nistP384, ECC_brainpoolP256r1, ECC_brainpoolP384r1 |
 | `--security-mode=MODE` | `-m` | None, Sign, SignAndEncrypt (also accepts numeric: 1, 2, 3) |
 | `--cert=PATH` | | Client certificate path (PEM) |
 | `--key=PATH` | | Client private key path (PEM) |
@@ -321,7 +329,7 @@ opcua-cli read opc.tcp://server:4840 "i=2259" \
 | `--password=PASS` | `-p` | Password for authentication |
 | `--timeout=SECONDS` | `-t` | Connection timeout in seconds (default: 5) |
 
-Security is configured via CommandRunner, which maps CLI options to ClientBuilder methods (setSecurityPolicy, setSecurityMode, setClientCertificate, setUserCredentials).
+Security is configured via CommandRunner, which maps CLI options to ClientBuilder methods (setSecurityPolicy, setSecurityMode, setClientCertificate, setUserCredentials). ECC policies are handled transparently — no code changes needed in the CLI layer.
 
 ---
 
@@ -446,7 +454,7 @@ The dump output can be fed directly into generate:nodeset for end-to-end code ge
 
 ## 8. Testing
 
-272 tests (253 unit + 19 integration), 592 assertions, 99.9% code coverage. Code coverage must remain >= 99.5% on every pull request.
+288 tests (258 unit + 30 integration), 99.9% code coverage. Code coverage must remain >= 99.5% on every pull request.
 
 Tests use [Pest PHP](https://pestphp.com/) and [pcov](https://github.com/krakjoe/pcov) for coverage.
 

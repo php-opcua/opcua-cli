@@ -2,6 +2,20 @@
 
 > **Versioning:** This package follows the same version numbering as [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client). Each CLI release is aligned with the corresponding client library release.
 
+## v4.1.0 — 2026-04-13
+
+- [x] **ECC security policy support** — all 10 CLI commands work with `ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1` (auto-generated ECC certificates, EccEncryptedSecret for username/password)
+- [x] Bumped `php-opcua/opcua-client` dependency from `^4.0` to `^4.1`
+- [x] Security support expanded from 6 to **10 policies** (6 RSA + 4 ECC)
+- [x] **12 new ECC integration tests** against `uanetstandard-test-suite` ECC servers (ports 4848, 4849)
+- [x] **4 new unit tests** for ECC security policy resolution in `CommandRunner`
+- [x] Updated all documentation (README, doc/, llms.txt, llms-full.txt, llms-skills.md)
+
+## v4.0.2 — 2026-04-07
+
+- [x] **AI-Ready documentation** — added `llms-skills.md` with 11 task-oriented recipes for AI coding assistants
+- [x] Added AI-Ready section to README
+
 ## v4.0.1 — 2026-04-02
 
 - [x] **Migrated test infrastructure to [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite)** — integration tests now run against the OPC Foundation's UA-.NETStandard reference implementation instead of node-opcua
@@ -12,13 +26,13 @@
 
 - [x] Extracted CLI tool from [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) into a standalone package
 - [x] **10 commands:** `browse`, `read`, `write`, `endpoints`, `watch`, `generate:nodeset`, `dump:nodeset`, `trust`, `trust:list`, `trust:remove`
-- [x] Full security support (6 policies, 3 auth modes)
+- [x] Full security support (6 RSA policies, 3 auth modes)
 - [x] JSON output mode (`--json`) for all commands
 - [x] Debug logging (stdout, stderr, file)
 - [x] NodeSet2.xml code generator: typed DTOs, PHP enums, binary codecs, registrar
 - [x] Server address space dump to NodeSet2.xml
 - [x] Server certificate trust management from the terminal
-- [x] **272 tests** (253 unit + 19 integration), 592 assertions, 99.9% code coverage
+- [x] **272 tests** (253 unit + 19 integration), 99.9% code coverage
 
 ## Planned
 

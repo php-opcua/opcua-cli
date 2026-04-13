@@ -190,18 +190,25 @@ The user needs to connect to a secured OPC UA server with encryption and/or auth
 # Username/password authentication
 opcua-cli read opc.tcp://server:4840 "i=2259" -u operator -p secret
 
-# Encrypted connection
+# Encrypted connection with RSA
 opcua-cli read opc.tcp://server:4840 "i=2259" \
     --security-policy=Basic256Sha256 \
     --security-mode=SignAndEncrypt
 
-# Full security with certificates and credentials
+# Full security with RSA certificates and credentials
 opcua-cli read opc.tcp://server:4840 "i=2259" \
     -s Basic256Sha256 \
     -m SignAndEncrypt \
     --cert=/certs/client.pem \
     --key=/certs/client.key \
     --ca=/certs/ca.pem \
+    -u operator \
+    -p secret
+
+# ECC security (auto-generated ECC certificate, no --cert/--key needed)
+opcua-cli read opc.tcp://server:4840 "i=2259" \
+    -s ECC_nistP256 \
+    -m SignAndEncrypt \
     -u operator \
     -p secret
 
@@ -213,7 +220,7 @@ opcua-cli endpoints opc.tcp://server:4840
 
 | Option | Short | Values |
 |--------|-------|--------|
-| `--security-policy` | `-s` | `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep`, `Aes256Sha256RsaPss` |
+| `--security-policy` | `-s` | `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep`, `Aes256Sha256RsaPss`, `ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1` |
 | `--security-mode` | `-m` | `None`, `Sign`, `SignAndEncrypt` (or `1`, `2`, `3`) |
 | `--cert` | | Client certificate path (PEM) |
 | `--key` | | Client private key path (PEM) |
@@ -224,7 +231,9 @@ opcua-cli endpoints opc.tcp://server:4840
 
 ### Important rules
 - Security options are **global** — they work with all commands (browse, read, write, watch, etc.)
-- If `--cert`/`--key` are omitted but policy/mode are set, a self-signed cert is auto-generated
+- If `--cert`/`--key` are omitted but policy/mode are set, a self-signed cert is auto-generated (RSA for RSA policies, ECC for ECC policies)
+- ECC policies (`ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1`) use ECDSA signatures and ECDH key agreement — no asymmetric encryption. Username/password with ECC uses `EccEncryptedSecret` automatically
+- **ECC disclaimer:** No commercial OPC UA vendor supports ECC endpoints yet — tested against OPC Foundation's UA-.NETStandard only
 - Use `opcua-cli endpoints` first to discover what security configurations the server supports
 - Short flags save typing: `-s Basic256Sha256 -m SignAndEncrypt -u admin -p secret`
 

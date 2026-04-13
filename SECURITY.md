@@ -33,7 +33,7 @@ This policy covers the `php-opcua/opcua-cli` package itself. For vulnerabilities
 
 ## Security Considerations
 
-OPC UA is used in industrial environments where security matters. This CLI tool inherits the full OPC UA security stack from [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) (6 security policies, 3 security modes, X.509 certificate authentication). When using in production:
+OPC UA is used in industrial environments where security matters. This CLI tool inherits the full OPC UA security stack from [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client) (10 security policies including ECC, 3 security modes, X.509 certificate authentication). When using in production:
 
 - Use `--security-policy=Basic256Sha256` or stronger
 - Use `--security-mode=SignAndEncrypt`

@@ -128,6 +128,10 @@ Auth:     Anonymous, UserName
 Endpoint: opc.tcp://localhost:4840
 Security: Basic256Sha256 (mode: SignAndEncrypt)
 Auth:     Anonymous, UserName, Certificate
+
+Endpoint: opc.tcp://localhost:4840
+Security: ECC_nistP256 (mode: SignAndEncrypt)
+Auth:     Anonymous, UserName
 ```
 
 ### `watch` -- Watch a value in real time
@@ -208,13 +212,13 @@ opcua-cli trust:remove ab:cd:12:34:... --trust-store=~/.opcua
 
 ## Security Options
 
-All commands support full security configuration:
+All commands support full security configuration — **10 policies** (6 RSA + 4 ECC), 3 modes, 3 auth methods:
 
 ```bash
 # Username/password authentication
 opcua-cli read opc.tcp://server:4840 "i=2259" -u admin -p secret
 
-# Full security with certificates
+# Full security with RSA certificates
 opcua-cli read opc.tcp://server:4840 "i=2259" \
   --security-policy=Basic256Sha256 \
   --security-mode=SignAndEncrypt \
@@ -222,11 +226,17 @@ opcua-cli read opc.tcp://server:4840 "i=2259" \
   --key=/path/to/client.key \
   --ca=/path/to/ca.pem \
   -u operator -p secret
+
+# ECC security (auto-generated ECC certificate)
+opcua-cli read opc.tcp://server:4840 "i=2259" \
+  --security-policy=ECC_nistP256 \
+  --security-mode=SignAndEncrypt \
+  -u operator -p secret
 ```
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--security-policy=<policy>` | `-s` | None, Basic256Sha256, Aes256Sha256RsaPss, etc. |
+| `--security-policy=<policy>` | `-s` | None, Basic128Rsa15, Basic256, Basic256Sha256, Aes128Sha256RsaOaep, Aes256Sha256RsaPss, ECC_nistP256, ECC_nistP384, ECC_brainpoolP256r1, ECC_brainpoolP384r1 |
 | `--security-mode=<mode>` | `-m` | None, Sign, SignAndEncrypt |
 | `--cert=<path>` | | Client certificate path |
 | `--key=<path>` | | Client private key path |
@@ -234,6 +244,8 @@ opcua-cli read opc.tcp://server:4840 "i=2259" \
 | `--username=<user>` | `-u` | Username |
 | `--password=<pass>` | `-p` | Password |
 | `--timeout=<seconds>` | `-t` | Connection timeout (default: 5) |
+
+> **ECC disclaimer:** ECC security policies (`ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1`) are fully implemented and tested against the OPC Foundation's UA-.NETStandard reference stack. However, no commercial OPC UA vendor supports ECC endpoints yet. When using ECC, client certificates are auto-generated if `--cert`/`--key` are omitted, and username/password authentication uses the `EccEncryptedSecret` protocol automatically.
 
 ## Output Options
 
@@ -297,7 +309,7 @@ This CLI tool is additionally integration-tested via [uanetstandard-test-suite](
 </tr>
 </table>
 
-272 tests (253 unit + 19 integration) with **99.9% code coverage**. Integration tests run against [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) — a Docker-based OPC UA environment built on the OPC Foundation's UA-.NETStandard reference implementation.
+288 tests (258 unit + 30 integration) with **99.9% code coverage**. Integration tests run against [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) — a Docker-based OPC UA environment built on the OPC Foundation's UA-.NETStandard reference implementation.
 
 ```bash
 ./vendor/bin/pest                                          # everything
