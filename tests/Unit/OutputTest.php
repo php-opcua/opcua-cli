@@ -8,7 +8,7 @@ use PhpOpcua\Cli\Output\JsonOutput;
 describe('ConsoleOutput', function () {
 
     it('writes line to stdout', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->writeln('Hello');
         rewind($stream);
@@ -16,7 +16,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('writes without newline', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->write('Hello');
         rewind($stream);
@@ -24,8 +24,8 @@ describe('ConsoleOutput', function () {
     });
 
     it('writes error to stderr', function () {
-        $stdout = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
-        $stderr = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stdout = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
+        $stderr = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stdout, $stderr);
         $output->error('Something failed');
         rewind($stderr);
@@ -34,7 +34,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs data as key-value pairs', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->data(['Name' => 'Test', 'Value' => 42]);
         rewind($stream);
@@ -46,7 +46,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs data with null and bool values', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->data(['A' => null, 'B' => true, 'C' => false, 'D' => [1, 2]]);
         rewind($stream);
@@ -58,7 +58,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs tree structure', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->tree([
             ['name' => 'Server', 'nodeId' => 'i=2253', 'class' => 'Object'],
@@ -75,7 +75,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs ANSI color codes when color is forced on', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR, forceColor: true);
         $output->data(['Key' => 'Value']);
         rewind($stream);
@@ -85,7 +85,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('does not output ANSI codes when color is forced off', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->data(['Key' => 'Value']);
         rewind($stream);
@@ -94,7 +94,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('color formats null, bool, and array values with color on', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR, forceColor: true);
         $output->data(['A' => null, 'B' => true, 'C' => false, 'D' => ['x', 'y']]);
         rewind($stream);
@@ -106,7 +106,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('renders tree with color enabled', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR, forceColor: true);
         $output->tree([
             ['name' => 'Server', 'nodeId' => 'i=2253', 'class' => 'Object'],
@@ -119,7 +119,7 @@ describe('ConsoleOutput', function () {
 
     it('detects NO_COLOR env and disables color', function () {
         putenv('NO_COLOR=1');
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->data(['Key' => 'Value']);
         rewind($stream);
@@ -139,7 +139,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs empty table without error', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->table([]);
         rewind($stream);
@@ -147,7 +147,7 @@ describe('ConsoleOutput', function () {
     });
 
     it('outputs table rows', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new ConsoleOutput($stream, STDERR);
         $output->table([
             ['Endpoint' => 'opc.tcp://localhost', 'Security' => 'None'],
@@ -163,7 +163,7 @@ describe('ConsoleOutput', function () {
 describe('JsonOutput', function () {
 
     it('writes data as JSON', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stream, STDERR);
         $output->data(['key' => 'value']);
         rewind($stream);
@@ -173,7 +173,7 @@ describe('JsonOutput', function () {
     });
 
     it('writes table as JSON array', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stream, STDERR);
         $output->table([['a' => 1], ['a' => 2]]);
         rewind($stream);
@@ -182,7 +182,7 @@ describe('JsonOutput', function () {
     });
 
     it('writes tree as JSON', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stream, STDERR);
         $nodes = [['name' => 'Server', 'nodeId' => 'i=2253', 'class' => 'Object']];
         $output->tree($nodes);
@@ -192,8 +192,8 @@ describe('JsonOutput', function () {
     });
 
     it('writes error to stderr as JSON', function () {
-        $stdout = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
-        $stderr = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stdout = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
+        $stderr = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stdout, $stderr);
         $output->error('fail');
         rewind($stderr);
@@ -202,7 +202,7 @@ describe('JsonOutput', function () {
     });
 
     it('writes message as JSON', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stream, STDERR);
         $output->writeln('hello');
         rewind($stream);
@@ -211,7 +211,7 @@ describe('JsonOutput', function () {
     });
 
     it('writes raw string', function () {
-        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+');
+        $stream = fopen(tempnam(sys_get_temp_dir(), 'opcua-test-'), 'w+b');
         $output = new JsonOutput($stream, STDERR);
         $output->write('raw');
         rewind($stream);

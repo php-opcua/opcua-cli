@@ -29,7 +29,7 @@ class ConsoleOutput implements OutputInterface
      */
     public function writeln(string $message): void
     {
-        fwrite($this->stdout, $message . PHP_EOL);
+        fwrite($this->stdout, $message . "\n");
     }
 
     /**
@@ -45,7 +45,7 @@ class ConsoleOutput implements OutputInterface
      */
     public function error(string $message): void
     {
-        fwrite($this->stderr, $this->color($message, '31') . PHP_EOL);
+        fwrite($this->stderr, $this->color($message, '31') . "\n");
     }
 
     /**

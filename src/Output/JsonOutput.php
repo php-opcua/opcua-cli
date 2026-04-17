@@ -24,7 +24,7 @@ class JsonOutput implements OutputInterface
      */
     public function writeln(string $message): void
     {
-        fwrite($this->stdout, json_encode(['message' => $message], JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        fwrite($this->stdout, json_encode(['message' => $message], JSON_UNESCAPED_SLASHES) . "\n");
     }
 
     /**
@@ -40,7 +40,7 @@ class JsonOutput implements OutputInterface
      */
     public function error(string $message): void
     {
-        fwrite($this->stderr, json_encode(['error' => $message], JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        fwrite($this->stderr, json_encode(['error' => $message], JSON_UNESCAPED_SLASHES) . "\n");
     }
 
     /**
@@ -48,7 +48,7 @@ class JsonOutput implements OutputInterface
      */
     public function data(array $data): void
     {
-        fwrite($this->stdout, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        fwrite($this->stdout, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 
     /**
@@ -56,7 +56,7 @@ class JsonOutput implements OutputInterface
      */
     public function table(array $rows): void
     {
-        fwrite($this->stdout, json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        fwrite($this->stdout, json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 
     /**
@@ -64,6 +64,6 @@ class JsonOutput implements OutputInterface
      */
     public function tree(array $nodes, string $prefix = ''): void
     {
-        fwrite($this->stdout, json_encode($nodes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        fwrite($this->stdout, json_encode($nodes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 }

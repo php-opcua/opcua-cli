@@ -26,7 +26,7 @@ class StreamLogger extends AbstractLogger
     {
         $timestamp = date('H:i:s.') . substr((string) microtime(true), -3);
         $interpolated = $this->interpolate((string) $message, $context);
-        fwrite($this->stream, "[{$timestamp}] [{$level}] {$interpolated}" . PHP_EOL);
+        fwrite($this->stream, "[{$timestamp}] [{$level}] {$interpolated}\n");
     }
 
     /**
