@@ -2,6 +2,14 @@
 
 > **Versioning:** This package follows the same version numbering as [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client). Each CLI release is aligned with the corresponding client library release.
 
+## v4.2.0 — 2026-04-17
+
+- [x] Bumped `php-opcua/opcua-client` dependency from `^4.1` to `^4.2.0`
+- [x] Aligned with the Kernel + ServiceModule architecture shipped in `opcua-client` v4.2.0 — no CLI source change was required, the public API (`ClientBuilder`, `OpcUaClientInterface`, `Types\*`) is backward compatible.
+- [x] Fixed `Application::VERSION` (was stuck at `1.0.0` since the v4.0.0 extraction from `opcua-client`) — `opcua-cli --version` now reports `4.2.0` and will stay in sync with the bundled client release.
+- [x] Verified the `Client::resolveNodeId()` regression discovered during the v4.2.0 bump is fixed upstream: NodeId strings whose identifier contains `/` (e.g. `ns=1;s=TestServer/Dynamic/Counter` on UA-.NETStandard-based servers) are no longer misrouted to the browse-path resolver. Two `watch` integration tests regain green status with no CLI-side change.
+- [ ] *(Not yet used by the CLI — tracked for future exploration.)* `opcua-client` v4.2.0 exposes `ClientBuilder::addModule()` / `replaceModule()`, new `getServerBuildInfo()` / `getServerProductName()` etc. server info methods, and a default-disabled `NodeManagementModule`. Candidate commands: `server:info` (single-call BuildInfo report via `getServerBuildInfo()`), `node:add` / `node:delete` / `ref:add` / `ref:delete` (opt-in via `--with-node-management` which registers `NodeManagementModule` on the builder).
+
 ## v4.1.0 — 2026-04-13
 
 - [x] **ECC security policy support** — all 10 CLI commands work with `ECC_nistP256`, `ECC_nistP384`, `ECC_brainpoolP256r1`, `ECC_brainpoolP384r1` (auto-generated ECC certificates, EccEncryptedSecret for username/password)

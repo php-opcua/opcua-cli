@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.2.0] - 2026-04-17
+
+### Changed
+
+- Bumped `php-opcua/opcua-client` dependency from `^4.1` to `^4.2.0`. The CLI is aligned with the `opcua-client` v4.2.0 release which introduces the Kernel + ServiceModule architecture (internal refactor; public API unchanged), `ClientBuilder::addModule()` / `replaceModule()`, and the new server BuildInfo convenience methods on `OpcUaClientInterface`. No CLI source change was required: all commands consume `ClientBuilder`, `OpcUaClientInterface`, and the `Types\` DTOs, none of which had breaking changes.
+- Fixed `Application::VERSION` — was frozen at `1.0.0` since the v4.0.0 extraction from `opcua-client`. `opcua-cli --version` now reports the actual package version (`4.2.0`) and will stay aligned with the `opcua-client` release it bundles, per the versioning note at the top of `ROADMAP.md`.
+
+### Fixed
+
+- **`watch` (polling and subscription) and any read/write against NodeIds whose string identifier contains `/`.** The previous `opcua-client` v4.2.0 shipped with an overly permissive heuristic in `Client::resolveNodeId()` that routed every `/`-bearing string through `TranslateBrowsePathModule`, so real NodeIds such as `ns=1;s=TestServer/Dynamic/Counter` (routinely exposed by UA-.NETStandard-based servers) failed with `ServiceException: 0x806F0000 (BadNotFound)`. Fixed upstream in `opcua-client` v4.2.0; the CLI picks up the fix via the `^4.2.0` constraint. Two integration tests in `tests/Integration/CliTest.php` (`watches Counter node with polling mode` and `writes a value and watch CLI detects it via polling`) regained green status with no code change on the CLI side.
+
 ## [4.1.0] - 2026-04-13
 
 ### Added
