@@ -6,6 +6,7 @@
 
 - Bumped `php-opcua/opcua-client` dependency from `^4.1` to `^4.2.0`. The CLI is aligned with the `opcua-client` v4.2.0 release which introduces the Kernel + ServiceModule architecture (internal refactor; public API unchanged), `ClientBuilder::addModule()` / `replaceModule()`, and the new server BuildInfo convenience methods on `OpcUaClientInterface`. No CLI source change was required: all commands consume `ClientBuilder`, `OpcUaClientInterface`, and the `Types\` DTOs, none of which had breaking changes.
 - Fixed `Application::VERSION` — was frozen at `1.0.0` since the v4.0.0 extraction from `opcua-client`. `opcua-cli --version` now reports the actual package version (`4.2.0`) and will stay aligned with the `opcua-client` release it bundles, per the versioning note at the top of `ROADMAP.md`.
+- **CI workflow aligned with `opcua-client`.** `.github/workflows/tests.yml` now splits `unit` and `integration` jobs: unit tests run cross-OS on `ubuntu-latest`, `macos-latest`, and `windows-latest` × PHP 8.2–8.5 (12 combinations, 258 tests each), integration tests run Ubuntu-only against `php-opcua/uanetstandard-test-suite@v1.1.0` with `needs: unit` gating × PHP 8.2–8.5 (4 combinations). `[DOC]`-prefixed commits skip CI on both jobs. Code-style check (`composer format:check`) runs once on Ubuntu/PHP 8.5 instead of every matrix slot. Triggers expanded from `[master]` to `[main, master]`. `codecov/codecov-action` bumped from `v5` to `v6` to silence Node.js 20 deprecation warnings on GitHub Actions runners.
 
 ### Fixed
 

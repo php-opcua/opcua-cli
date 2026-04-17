@@ -16,6 +16,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/php-opcua/opcua-cli?style=flat-square" alt="License"></a>
 </p>
 
+<p align="center">
+  <img src="https://custom-icon-badges.demolab.com/badge/Linux-✓-2ea44f?style=flat-square&logo=linux&logoColor=white" alt="Linux">
+  <img src="https://custom-icon-badges.demolab.com/badge/macOS-✓-2ea44f?style=flat-square&logo=apple&logoColor=white" alt="macOS">
+  <img src="https://custom-icon-badges.demolab.com/badge/Windows-✓-2ea44f?style=flat-square&logo=windows11&logoColor=white" alt="Windows">
+</p>
+
 ---
 
 Command-line tool for OPC UA servers. Browse, read, write, watch, discover endpoints, manage certificates, and generate PHP code from NodeSet2.xml -- all from the terminal.
@@ -303,13 +309,13 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 
 The underlying [opcua-client](https://github.com/php-opcua/opcua-client) is integration-tested against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification. This is the same stack used by major industrial vendors to certify their products.
 
-This CLI tool is additionally integration-tested via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite), verifying that every command works correctly against real-world OPC UA servers.
+This CLI tool is additionally integration-tested via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite), verifying that every command works correctly against real-world OPC UA servers. Like [opcua-client](https://github.com/php-opcua/opcua-client), the CLI unit tests run on **Linux, macOS, and Windows** across PHP 8.2–8.5 in CI on every push.
 
 </td>
 </tr>
 </table>
 
-288 tests (258 unit + 30 integration) with **99.9% code coverage**. Integration tests run against [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) — a Docker-based OPC UA environment built on the OPC Foundation's UA-.NETStandard reference implementation.
+288 tests (258 unit + 30 integration) with **99.9% code coverage**. Unit tests run cross-OS (Linux, macOS, Windows) × PHP 8.2–8.5 = 12 combinations; integration tests run on Linux × PHP 8.2–8.5 = 4 combinations against [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite) — a Docker-based OPC UA environment built on the OPC Foundation's UA-.NETStandard reference implementation.
 
 ```bash
 ./vendor/bin/pest                                          # everything

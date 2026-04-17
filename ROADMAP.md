@@ -8,7 +8,7 @@
 - [x] Aligned with the Kernel + ServiceModule architecture shipped in `opcua-client` v4.2.0 — no CLI source change was required, the public API (`ClientBuilder`, `OpcUaClientInterface`, `Types\*`) is backward compatible.
 - [x] Fixed `Application::VERSION` (was stuck at `1.0.0` since the v4.0.0 extraction from `opcua-client`) — `opcua-cli --version` now reports `4.2.0` and will stay in sync with the bundled client release.
 - [x] Verified the `Client::resolveNodeId()` regression discovered during the v4.2.0 bump is fixed upstream: NodeId strings whose identifier contains `/` (e.g. `ns=1;s=TestServer/Dynamic/Counter` on UA-.NETStandard-based servers) are no longer misrouted to the browse-path resolver. Two `watch` integration tests regain green status with no CLI-side change.
-- [ ] *(Not yet used by the CLI — tracked for future exploration.)* `opcua-client` v4.2.0 exposes `ClientBuilder::addModule()` / `replaceModule()`, new `getServerBuildInfo()` / `getServerProductName()` etc. server info methods, and a default-disabled `NodeManagementModule`. Candidate commands: `server:info` (single-call BuildInfo report via `getServerBuildInfo()`), `node:add` / `node:delete` / `ref:add` / `ref:delete` (opt-in via `--with-node-management` which registers `NodeManagementModule` on the builder).
+- [x] CI workflow aligned with `opcua-client`: `unit` / `integration` jobs split, unit matrix extended to `ubuntu-latest` / `macos-latest` / `windows-latest` × PHP 8.2–8.5, integration gated by `needs: unit`, `[DOC]` commits skip CI, `codecov-action` bumped to `v6`, triggers on `[main, master]`.
 
 ## v4.1.0 — 2026-04-13
 
