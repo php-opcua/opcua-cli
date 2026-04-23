@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>urn:test:malicious:encoding</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="urn:test:malicious:encoding" Version="1.0.0" PublicationDate="2026-04-23T00:00:00Z" />
+  </Models>
+  <Aliases>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="HasEncoding">i=38</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;i=3001" BrowseName="1:EvilStruct">
+    <DisplayName>EvilStruct</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=22</Reference>
+      <Reference ReferenceType="HasEncoding" IsForward="true">ns=1;s=enc&apos;;system(&apos;id&apos;);//</Reference>
+    </References>
+    <Definition Name="EvilStruct">
+      <Field Name="X" DataType="Double" />
+    </Definition>
+  </UADataType>
+</UANodeSet>

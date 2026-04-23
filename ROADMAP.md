@@ -2,6 +2,11 @@
 
 > **Versioning:** This package follows the same version numbering as [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client). Each CLI release is aligned with the corresponding client library release.
 
+## v4.3.0 — 2026-04-23
+
+- [x] Bumped `php-opcua/opcua-client` dependency from `^4.2.0` to `^4.3.0`.
+- [x] **Security hardening of `generate:nodeset`** — fixed two High-severity code-injection paths and more . See `CHANGELOG.md` for per-issue details.
+- [x] **New Security tests** in `tests/Unit/SecurityTest.php` with 5 malicious fixture XMLs under `tests/Fixtures/malicious/`. 
 ## v4.2.0 — 2026-04-17
 
 - [x] Bumped `php-opcua/opcua-client` dependency from `^4.1` to `^4.2.0`

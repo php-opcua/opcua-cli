@@ -26,7 +26,7 @@ use PhpOpcua\Client\Exception\UntrustedCertificateException;
  */
 class Application
 {
-    private const VERSION = '4.2.0';
+    private const VERSION = '4.3.0';
 
     /** @var array<string, CommandInterface> */
     private array $commands = [];
@@ -120,6 +120,10 @@ class Application
             return $this->handleUntrustedCertificate($e, $output, $parsed['arguments'][0] ?? '<endpoint>', $parsed['command'] ?? '');
         } catch (OpcUaException $e) {
             return $this->handleOpcUaException($e, $output);
+        } catch (\RuntimeException $e) {
+            $output->error('Error: ' . $e->getMessage());
+
+            return 1;
         }
     }
 

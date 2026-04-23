@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>urn:test:malicious:nodeid</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="urn:test:malicious:nodeid" Version="1.0.0" PublicationDate="2026-04-23T00:00:00Z" />
+  </Models>
+  <UAObject NodeId="ns=1;s=x&apos;;phpinfo();//" BrowseName="1:Evil">
+    <DisplayName>Evil</DisplayName>
+  </UAObject>
+  <UAObject NodeId="ns=1;s=back\slash" BrowseName="1:Backslash">
+    <DisplayName>Backslash</DisplayName>
+  </UAObject>
+</UANodeSet>

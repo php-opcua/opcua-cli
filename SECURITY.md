@@ -42,3 +42,11 @@ OPC UA is used in industrial environments where security matters. This CLI tool 
 - Avoid passing passwords directly on the command line (`-p`); prefer environment variables or interactive prompts where possible, as command-line arguments may be visible in process listings
 - Keep PHP and OpenSSL up to date
 
+### `generate:nodeset` and untrusted `NodeSet2.xml` files
+
+`generate:nodeset` consumes a `NodeSet2.xml` file provided by the user and emits PHP source into `--output`. As of **v4.3.0** every attacker-controllable string from the XML is emitted through `var_export()` (NodeId values, encoding IDs, enum-node IDs) or through the `safeClassName()` / `[^A-Za-z0-9]` filters (enum names used as file paths, `RequiredModel.ModelUri` used as a dependency-registrar class name), making the generator safe to run against untrusted input in principle. That said, the generated PHP is ultimately loaded into your application; treat `generate:nodeset` as a code-production step and:
+
+- Prefer `NodeSet2.xml` files published by the OPC Foundation or by vendors you trust.
+- Inspect the diff of the generated directory before committing it to your repository.
+- Run `generate:nodeset` inside a short-lived CI job, not on a developer workstation with broad filesystem access, when processing third-party NodeSets.
+

@@ -121,7 +121,12 @@ class CommandRunner
     private function createLogger(array $options, OutputInterface $output): LoggerInterface
     {
         if (isset($options['debug-file']) && is_string($options['debug-file'])) {
-            return new StreamLogger(fopen($options['debug-file'], 'a'));
+            $handle = @fopen($options['debug-file'], 'a');
+            if ($handle === false) {
+                throw new \RuntimeException("Cannot open debug file for writing: {$options['debug-file']}");
+            }
+
+            return new StreamLogger($handle);
         }
 
         if (isset($options['debug-stderr']) && $options['debug-stderr'] === true) {

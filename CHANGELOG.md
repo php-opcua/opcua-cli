@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.3.0] - 2026-04-23
+
+### Security
+
+- **Fixed PHP code injection e path traversal** in `generate:nodeset` in `generate:nodeset`
+
+New test coverage: **10 regression tests** in `tests/Unit/SecurityTest.php` with 5 malicious fixture XMLs under `tests/Fixtures/malicious/` (quote-in-NodeId, quote-in-encoding-id, quote-in-enum-node-id, path-traversal-enum-name, injection-via-ModelUri) covering every fix. 
+### Changed
+
+- **Bumped** `php-opcua/opcua-client` dependency from `^4.2.0` to `^4.3.0`. The CLI is aligned with the `opcua-client` v4.3.0 consolidation release. No CLI source change was required: all commands consume `ClientBuilder`, `OpcUaClientInterface`, the `Exception\{OpcUaException,UntrustedCertificateException}` pair, `Security\{SecurityPolicy,SecurityMode}`, `TrustStore\{FileTrustStore,TrustPolicy}`, and the `Types\` DTOs — every one of these surfaces is either unchanged or purely additive in v4.3.0. The removed concrete `Kernel\ClientKernel`, the new `Cache\CacheCodecInterface` / `Cache\WireCacheCodec` / `Cache\CacheCorruptedException`, the `Wire\*` namespace, and `NodeManagementModule` are all internal to `Client` — none of them are referenced from `src/Commands/` or `src/CommandRunner.php`.
+- **Bumped** `Application::VERSION`to `4.3.0`.
+
 ## [4.2.0] - 2026-04-17
 
 ### Changed

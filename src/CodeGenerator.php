@@ -50,7 +50,7 @@ class CodeGenerator
             } else {
                 $usedNames[$constName] = 1;
             }
-            $constants .= "    public const {$constName} = '{$node['nodeId']}';\n\n";
+            $constants .= '    public const ' . $constName . ' = ' . var_export($node['nodeId'], true) . ";\n\n";
         }
 
         return <<<PHP
@@ -247,7 +247,7 @@ class CodeGenerator
         foreach ($codecs as $codec) {
             $nodeIdRef = $codec['constName'] !== null
                 ? "{$nodeIdClassName}::{$codec['constName']}"
-                : "'{$codec['encodingId']}'";
+                : var_export($codec['encodingId'], true);
             $codecRegistrations .= "        \$repository->register(\\PhpOpcua\\Client\\Types\\NodeId::parse({$nodeIdRef}), new Codecs\\{$codec['codecClass']}());\n";
         }
 
@@ -255,7 +255,7 @@ class CodeGenerator
         foreach ($enumMappings as $nodeId => $info) {
             $nodeIdRef = $info['constName'] !== null
                 ? "{$nodeIdClassName}::{$info['constName']}"
-                : "'{$nodeId}'";
+                : var_export($nodeId, true);
             $enumEntries .= "            {$nodeIdRef} => Enums\\{$info['enumClass']}::class,\n";
         }
 

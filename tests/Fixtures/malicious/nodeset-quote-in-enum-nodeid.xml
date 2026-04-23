@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>urn:test:malicious:enumnode</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="urn:test:malicious:enumnode" Version="1.0.0" PublicationDate="2026-04-23T00:00:00Z" />
+  </Models>
+  <Aliases>
+    <Alias Alias="HasSubtype">i=45</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;s=enum&apos;;phpinfo();//" BrowseName="1:EvilEnumNode">
+    <DisplayName>EvilEnumNode</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
+    </References>
+    <Definition Name="EvilEnumNode">
+      <Field Name="ONE" Value="1" />
+      <Field Name="TWO" Value="2" />
+    </Definition>
+  </UADataType>
+</UANodeSet>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>urn:test:malicious:traversal</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="urn:test:malicious:traversal" Version="1.0.0" PublicationDate="2026-04-23T00:00:00Z" />
+  </Models>
+  <Aliases>
+    <Alias Alias="HasSubtype">i=45</Alias>
+  </Aliases>
+  <UADataType NodeId="ns=1;i=3010" BrowseName="1:TraversalEnum">
+    <DisplayName>TraversalEnum</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
+    </References>
+    <Definition Name="../../pwned">
+      <Field Name="ZERO" Value="0" />
+      <Field Name="ONE" Value="1" />
+    </Definition>
+  </UADataType>
+</UANodeSet>

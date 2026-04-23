@@ -120,14 +120,15 @@ class GenerateNodesetCommand implements CommandInterface
             $this->ensureDirectory($outputDir . '/Enums');
 
             foreach ($enumerations as $enumNodeId => $enum) {
-                $enumCode = $generator->generateEnumClass($enum['name'], $enum['values'], $namespace);
-                $this->writeFile($outputDir . '/Enums/' . $enum['name'] . '.php', $enumCode);
-                $output->writeln("Generated: {$outputDir}/Enums/{$enum['name']}.php");
+                $enumClassName = $this->safeClassName($enum['name']);
+                $enumCode = $generator->generateEnumClass($enumClassName, $enum['values'], $namespace);
+                $this->writeFile($outputDir . '/Enums/' . $enumClassName . '.php', $enumCode);
+                $output->writeln("Generated: {$outputDir}/Enums/{$enumClassName}.php");
                 $filesWritten++;
 
-                $enumFieldMap[$enumNodeId] = $enum['name'];
+                $enumFieldMap[$enumNodeId] = $enumClassName;
                 $enumNodeMappings[$enumNodeId] = [
-                    'enumClass' => $enum['name'],
+                    'enumClass' => $enumClassName,
                     'constName' => $nodeIdConstMap[$enumNodeId] ?? null,
                 ];
             }
@@ -222,9 +223,9 @@ class GenerateNodesetCommand implements CommandInterface
 
         $path = rtrim(parse_url($modelUri, PHP_URL_PATH) ?? '', '/');
         $name = basename($path);
-        $name = str_replace(['-', '.', ' '], '', $name);
+        $name = preg_replace('/[^A-Za-z0-9]/', '', $name) ?? '';
 
-        return $name ?: null;
+        return $name !== '' ? $name : null;
     }
 
     private function safeClassName(string $name): string

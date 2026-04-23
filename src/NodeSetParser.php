@@ -44,7 +44,7 @@ class NodeSetParser
      */
     public function parse(string $filePath): self
     {
-        $xml = simplexml_load_file($filePath);
+        $xml = simplexml_load_file($filePath, SimpleXMLElement::class, LIBXML_NONET);
         if ($xml === false) {
             throw new \RuntimeException("Failed to parse XML file: {$filePath}");
         }

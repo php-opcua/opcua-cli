@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>urn:test:malicious:modeluri</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="urn:test:malicious:modeluri" Version="1.0.0" PublicationDate="2026-04-23T00:00:00Z">
+      <RequiredModel ModelUri="http://x/a&apos;);system(&apos;id&apos;);//" Version="1.0" />
+    </Model>
+  </Models>
+  <UAObject NodeId="ns=1;i=1000" BrowseName="1:Dummy">
+    <DisplayName>Dummy</DisplayName>
+  </UAObject>
+</UANodeSet>
