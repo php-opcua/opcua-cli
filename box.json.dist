@@ -1,0 +1,10 @@
+{
+    "main": "bin/opcua-cli",
+    "output": "build/opcua-cli.phar",
+    "check-requirements": false,
+    "compactors": [
+        "KevinGH\\Box\\Compactor\\Php",
+        "KevinGH\\Box\\Compactor\\Json"
+    ],
+    "banner": false
+}

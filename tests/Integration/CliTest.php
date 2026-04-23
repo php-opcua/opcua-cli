@@ -5,11 +5,21 @@ declare(strict_types=1);
 use PhpOpcua\Cli\Application;
 use PhpOpcua\Cli\Commands\WatchCommand;
 use PhpOpcua\Cli\Output\ConsoleOutput;
+use PhpOpcua\Cli\Tests\Integration\Helpers\Readiness;
 use PhpOpcua\Client\Tests\Integration\Helpers\TestHelper;
 use PhpOpcua\Client\TrustStore\FileTrustStore;
 use PhpOpcua\Client\Types\BuiltinType;
 
 describe('CLI Integration', function () {
+
+    beforeEach(function () {
+        static $warmedUp = false;
+        if ($warmedUp) {
+            return;
+        }
+        Readiness::waitForEndpoint(TestHelper::ENDPOINT_NO_SECURITY);
+        $warmedUp = true;
+    });
 
     it('browses Objects folder via CLI', function () {
         $app = new Application();

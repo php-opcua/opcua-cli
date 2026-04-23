@@ -1,0 +1,159 @@
+name: Release binaries
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Attach built binaries to a GitHub release (requires a tag ref)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  PHP_VERSION: '8.4'
+
+jobs:
+  build-phar:
+    name: Build PHAR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          ini-values: phar.readonly=0, memory_limit=512M
+
+      - name: Install production dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --classmap-authoritative
+
+      - name: Download Box
+        run: curl -LsS -o box.phar https://github.com/box-project/box/releases/latest/download/box.phar
+
+      - name: Compile PHAR
+        run: php -d phar.readonly=0 box.phar compile -v
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opcua-cli-phar
+          path: build/opcua-cli.phar
+          if-no-files-found: error
+          retention-days: 1
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: build-phar
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,    target: linux-x86_64,   ext: '',     extensions: 'openssl,simplexml,dom,phar,posix,mbstring,tokenizer,sockets,ctype,fileinfo,filter,pcre,xml,xmlwriter,xmlreader,libxml' }
+          - { os: ubuntu-24.04-arm, target: linux-aarch64,  ext: '',     extensions: 'openssl,simplexml,dom,phar,posix,mbstring,tokenizer,sockets,ctype,fileinfo,filter,pcre,xml,xmlwriter,xmlreader,libxml' }
+          - { os: macos-latest,     target: macos-arm64,    ext: '',     extensions: 'openssl,simplexml,dom,phar,posix,mbstring,tokenizer,sockets,ctype,fileinfo,filter,pcre,xml,xmlwriter,xmlreader,libxml' }
+          - { os: windows-latest,   target: windows-x86_64, ext: '.exe', extensions: 'openssl,simplexml,dom,phar,mbstring,tokenizer,sockets,ctype,fileinfo,filter,pcre,xml,xmlwriter,xmlreader,libxml', experimental: true }
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          ini-values: phar.readonly=0, memory_limit=512M
+
+      - name: Download pre-built PHAR
+        uses: actions/download-artifact@v4
+        with:
+          name: opcua-cli-phar
+          path: build
+
+      - name: Cache SPC build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            spc-src/downloads
+            spc-src/source
+            spc-src/buildroot
+          key: spc-${{ matrix.target }}-php${{ env.PHP_VERSION }}-${{ hashFiles('.github/workflows/release-binaries.yml') }}
+          restore-keys: |
+            spc-${{ matrix.target }}-php${{ env.PHP_VERSION }}-
+
+      - name: Install static-php-cli
+        run: |
+          git clone --depth=1 https://github.com/crazywhalecc/static-php-cli.git spc-src
+          cd spc-src
+          composer install --no-dev --no-interaction --prefer-dist
+
+      - name: Doctor (install toolchain prerequisites)
+        run: php ./spc-src/bin/spc doctor --auto-fix
+
+      - name: Download sources
+        run: php ./spc-src/bin/spc download --for-extensions="${{ matrix.extensions }}" --with-php=${{ env.PHP_VERSION }}
+
+      - name: Build phpmicro SAPI
+        run: php ./spc-src/bin/spc build "${{ matrix.extensions }}" --build-micro
+
+      - name: Combine PHAR with phpmicro
+        run: php ./spc-src/bin/spc micro:combine build/opcua-cli.phar --output=opcua-cli-${{ matrix.target }}${{ matrix.ext }}
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          BIN="opcua-cli-${{ matrix.target }}${{ matrix.ext }}"
+          chmod +x "$BIN" || true
+          "./$BIN" --version
+          "./$BIN" --help
+          file "./$BIN" || true
+          ls -lh "./$BIN"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opcua-cli-${{ matrix.target }}
+          path: opcua-cli-${{ matrix.target }}${{ matrix.ext }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: opcua-cli-+(linux|macos|windows)-*
+          path: artifacts
+
+      - name: Flatten artifacts and compute checksums
+        run: |
+          shopt -s extglob
+          mkdir -p dist
+          find artifacts -type f -name 'opcua-cli-*' ! -name '*.phar' -exec mv {} dist/ \;
+          cd dist
+          sha256sum opcua-cli-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/opcua-cli-*
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
+          fail_on_unmatched_files: true

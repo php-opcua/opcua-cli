@@ -30,6 +30,44 @@ Built on top of [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-cl
 
 ## Installation
 
+### Standalone binary (no PHP required)
+
+Pre-built, self-contained executables are published on every tag release. No PHP installation, no `composer`, no `php.ini`, no extensions — one file.
+
+```bash
+# Linux x86_64
+curl -LO https://github.com/php-opcua/opcua-cli/releases/latest/download/opcua-cli-linux-x86_64
+chmod +x opcua-cli-linux-x86_64
+./opcua-cli-linux-x86_64 --version
+
+# Linux aarch64 (ARM: Raspberry Pi, AWS Graviton, industrial edge gateways)
+curl -LO https://github.com/php-opcua/opcua-cli/releases/latest/download/opcua-cli-linux-aarch64
+chmod +x opcua-cli-linux-aarch64
+
+# macOS arm64 (Apple Silicon — M1/M2/M3/M4)
+curl -LO https://github.com/php-opcua/opcua-cli/releases/latest/download/opcua-cli-macos-arm64
+chmod +x opcua-cli-macos-arm64
+xattr -cr opcua-cli-macos-arm64     # clear Gatekeeper quarantine — see note below
+
+# Windows x86_64 (experimental in v4.3.0 — may be missing from some releases, see note below)
+curl.exe -LO https://github.com/php-opcua/opcua-cli/releases/latest/download/opcua-cli-windows-x86_64.exe
+opcua-cli-windows-x86_64.exe --version
+```
+
+Each release also ships `SHA256SUMS.txt`; verify with `sha256sum --check SHA256SUMS.txt` (Linux/macOS) or `Get-FileHash -Algorithm SHA256` (PowerShell).
+
+The binaries bundle PHP 8.4, the statically linked OpenSSL (with full ECC curve support including `brainpoolP256r1/P384r1`), and the compiled `opcua-cli` — built via [static-php-cli](https://github.com/crazywhalecc/static-php-cli) + [Box](https://github.com/box-project/box).
+
+> **macOS note — unsigned binaries.** The macOS artefact for v4.3.0 is **not** code-signed or notarized. On first launch Gatekeeper will refuse to run it ("cannot be opened because the developer cannot be verified"). Strip the quarantine flag with `xattr -cr <binary>` as shown above, or open the binary once via *System Settings → Privacy & Security → Open Anyway*. Code-signing + notarization is tracked for v4.4.0.
+
+> **Intel Mac (`macos-x86_64`) not shipped.** GitHub retired the free `macos-13` runner pool during 2025, so a native Intel build is no longer producible on CI without a paid runner. Intel Mac users should install via Composer (`composer global require php-opcua/opcua-cli`) or build from source — see [`doc/04-build-from-source.md`](doc/04-build-from-source.md). Note that the Apple Silicon binary (`macos-arm64`) **will not** run on Intel Macs: Rosetta 2 translates x86_64 → arm64, not the reverse.
+
+> **Windows note — experimental.** The `windows-x86_64.exe` leg of the release workflow runs with `continue-on-error: true`, so a release is published even if the Windows build fails. If the `.exe` is not listed on a given release page, the Windows build did not complete successfully that cycle — use [`doc/04-build-from-source.md`](doc/04-build-from-source.md) to produce it locally, or wait for the next release. Windows promotion to first-class support is tracked for v4.4.0.
+
+Need a binary for a platform not in the list above (Alpine/musl, a different PHP or extension set)? See [`doc/04-build-from-source.md`](doc/04-build-from-source.md) — step-by-step instructions for reproducing the build locally.
+
+### Via Composer
+
 ```bash
 composer require php-opcua/opcua-cli
 ```

@@ -3,9 +3,19 @@
 declare(strict_types=1);
 
 use PhpOpcua\Cli\Application;
+use PhpOpcua\Cli\Tests\Integration\Helpers\Readiness;
 use PhpOpcua\Client\Tests\Integration\Helpers\TestHelper;
 
 describe('CLI ECC NIST Integration', function () {
+
+    beforeEach(function () {
+        static $warmedUp = false;
+        if ($warmedUp) {
+            return;
+        }
+        Readiness::waitForEndpoint(TestHelper::ENDPOINT_ECC_NIST);
+        $warmedUp = true;
+    });
 
     it('browses with ECC_nistP256 Sign', function () {
         $app = new Application();
@@ -74,6 +84,15 @@ describe('CLI ECC NIST Integration', function () {
 })->group('integration');
 
 describe('CLI ECC Brainpool Integration', function () {
+
+    beforeEach(function () {
+        static $warmedUp = false;
+        if ($warmedUp) {
+            return;
+        }
+        Readiness::waitForEndpoint(TestHelper::ENDPOINT_ECC_BRAINPOOL);
+        $warmedUp = true;
+    });
 
     it('browses with ECC_brainpoolP256r1 Sign', function () {
         $app = new Application();

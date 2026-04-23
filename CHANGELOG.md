@@ -1,16 +1,25 @@
 # Changelog
 
-## [4.3.0] - 2026-04-23
+## [4.3.0] - 2026-04-24
 
 ### Security
 
-- **Fixed PHP code injection e path traversal** in `generate:nodeset` in `generate:nodeset`
+- Fixed PHP code injection in `generate:nodeset` via unescaped `NodeId` / `encodingId` / `RequiredModel.ModelUri` (`src/CodeGenerator.php`, `src/Commands/GenerateNodesetCommand.php`).
+- Fixed path traversal in `generate:nodeset` via unsanitized enum `Name` attribute.
+- Hardened XML parsing with `LIBXML_NONET` in `NodeSetParser`.
+- 10 regression tests added in `tests/Unit/SecurityTest.php` with 5 malicious fixture XMLs.
 
-New test coverage: **10 regression tests** in `tests/Unit/SecurityTest.php` with 5 malicious fixture XMLs under `tests/Fixtures/malicious/` (quote-in-NodeId, quote-in-encoding-id, quote-in-enum-node-id, path-traversal-enum-name, injection-via-ModelUri) covering every fix. 
 ### Changed
 
-- **Bumped** `php-opcua/opcua-client` dependency from `^4.2.0` to `^4.3.0`. The CLI is aligned with the `opcua-client` v4.3.0 consolidation release. No CLI source change was required: all commands consume `ClientBuilder`, `OpcUaClientInterface`, the `Exception\{OpcUaException,UntrustedCertificateException}` pair, `Security\{SecurityPolicy,SecurityMode}`, `TrustStore\{FileTrustStore,TrustPolicy}`, and the `Types\` DTOs — every one of these surfaces is either unchanged or purely additive in v4.3.0. The removed concrete `Kernel\ClientKernel`, the new `Cache\CacheCodecInterface` / `Cache\WireCacheCodec` / `Cache\CacheCorruptedException`, the `Wire\*` namespace, and `NodeManagementModule` are all internal to `Client` — none of them are referenced from `src/Commands/` or `src/CommandRunner.php`.
-- **Bumped** `Application::VERSION`to `4.3.0`.
+- Bumped `php-opcua/opcua-client` from `^4.2.0` to `^4.3.0`.
+- Bumped `Application::VERSION` to `4.3.0`.
+- Bumped CI test-server suite from `uanetstandard-test-suite@v1.1.0` to `@v1.2.0`.
+- Clearer error message for failed `--debug-file` open and malformed NodeSet XML, via a new `\RuntimeException` handler in `Application::run()`.
+
+### Added
+
+- Integration-test readiness probe (`tests/Integration/Helpers/Readiness.php`) to fix flaky first-test-after-container-boot on PHP 8.3 / 8.5 runners.
+- Standalone binary releases for `linux-x86_64`, `linux-aarch64`, `macos-arm64`, and `windows-x86_64` (experimental), produced on tag push by `.github/workflows/release-binaries.yml` via `static-php-cli` + Box. See [README](README.md) and [`doc/04-build-from-source.md`](doc/04-build-from-source.md).
 
 ## [4.2.0] - 2026-04-17
 

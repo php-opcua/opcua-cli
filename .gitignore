@@ -27,3 +27,11 @@ Thumbs.db
 resources/
 
 playground.php
+
+# Binary release build artifacts
+/build/
+/box.phar
+/spc-src/
+/opcua-cli-linux-*
+/opcua-cli-macos-*
+/opcua-cli-windows-*
