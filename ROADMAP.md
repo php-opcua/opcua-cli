@@ -9,6 +9,7 @@
 - [x] Fixed PHP code injection + path traversal in `generate:nodeset`; added 10 regression tests.
 - [x] Fixed flaky integration tests on PHP 8.3 / 8.5 with a TCP readiness probe.
 - [x] Standalone binary releases (`linux-x86_64`, `linux-aarch64`, `macos-arm64`, `windows-x86_64` experimental) via `static-php-cli` + Box, wired in `.github/workflows/release-binaries.yml`.
+- [x] New `explore` command — interactive TUI browser of the server address space, built on `php-tui/php-tui`. Linux/macOS only in v4.3.0 (Windows prints a clear "not yet supported" error; upstream `php-tui` itself does not yet support Windows).
 
 ## v4.2.0 — 2026-04-17
 
@@ -80,13 +81,9 @@
 
 ## Won't Do (by design)
 
-### Interactive / REPL Mode
+### Persistent REPL shell
 
-The CLI is designed for single-shot commands that are composable with Unix pipes (`| jq`, `| grep`, `> file`). An interactive shell would require a different UX paradigm (tab completion, state management, history) and is better served by dedicated tools. Use `watch` for continuous monitoring.
-
-### GUI / TUI
-
-A terminal UI (ncurses, Textual, etc.) is out of scope. This package is a command-line tool, not a terminal application. Graphical OPC UA clients already exist (UaExpert, Prosys Browser, etc.).
+Single-shot commands remain the primary UX — they compose with Unix pipes (`| jq`, `| grep`, `> file`) and are scriptable. A persistent REPL shell with its own sub-command language, tab completion, and session history is out of scope. One-off interactive commands like `explore` (single invocation, single TUI, single disconnect) are an acceptable exception when they fit the pipe-vs-interactive boundary cleanly.
 
 ### Server-Side Features
 

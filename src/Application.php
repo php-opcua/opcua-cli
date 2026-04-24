@@ -8,6 +8,7 @@ use PhpOpcua\Cli\Commands\BrowseCommand;
 use PhpOpcua\Cli\Commands\CommandInterface;
 use PhpOpcua\Cli\Commands\DumpNodesetCommand;
 use PhpOpcua\Cli\Commands\EndpointsCommand;
+use PhpOpcua\Cli\Commands\ExploreCommand;
 use PhpOpcua\Cli\Commands\GenerateNodesetCommand;
 use PhpOpcua\Cli\Commands\ReadCommand;
 use PhpOpcua\Cli\Commands\TrustCommand;
@@ -38,6 +39,7 @@ class Application
         $this->registerCommand(new WriteCommand());
         $this->registerCommand(new EndpointsCommand());
         $this->registerCommand(new WatchCommand());
+        $this->registerCommand(new ExploreCommand());
         $this->registerCommand(new GenerateNodesetCommand());
         $this->registerCommand(new DumpNodesetCommand());
         $this->registerCommand(new TrustCommand());

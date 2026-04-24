@@ -20,6 +20,7 @@
 
 - Integration-test readiness probe (`tests/Integration/Helpers/Readiness.php`) to fix flaky first-test-after-container-boot on PHP 8.3 / 8.5 runners.
 - Standalone binary releases for `linux-x86_64`, `linux-aarch64`, `macos-arm64`, and `windows-x86_64` (experimental), produced on tag push by `.github/workflows/release-binaries.yml` via `static-php-cli` + Box. See [README](README.md) and [`doc/04-build-from-source.md`](doc/04-build-from-source.md).
+- New `explore` command — interactive TUI browser of the server address space (tree + details + log panes), built on `php-tui/php-tui`. Linux/macOS only; Windows prints a clear "not yet supported" error (upstream `php-tui` does not yet support Windows).
 
 ## [4.2.0] - 2026-04-17
 
