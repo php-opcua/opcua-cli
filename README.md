@@ -29,7 +29,7 @@ Command-line tool for OPC UA servers. Browse, read, write, watch, interactively 
 Built on top of [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client), the pure PHP OPC UA client.
 
 <p align="center">
-  <video src="assets/explorer-command.mp4" controls width="800" alt="opcua-cli explore demo"></video>
+  <img src="assets/explorer-command.gif" alt="opcua-cli explore demo" width="800">
 </p>
 
 ## Installation
