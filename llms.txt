@@ -9,6 +9,7 @@ A PHP CLI tool for interacting with OPC UA servers directly from the terminal. I
 ## Use cases
 
 - Browse the OPC UA address space of PLCs, SCADA systems, sensors
+- Interactively explore the address space through a full-screen TUI (`explore` command, Linux/macOS)
 - Read and write process variables from the command line
 - Watch value changes in real time (subscription or polling mode)
 - Discover server endpoints and security policies
@@ -77,6 +78,15 @@ opcua-cli watch opc.tcp://localhost:4840 "ns=2;i=1001" --interval=250
 ```
 
 Default: subscription mode (server pushes changes). With --interval=N: polling mode (read every N ms).
+
+### explore — Interactive TUI browser
+
+```bash
+opcua-cli explore opc.tcp://localhost:4840
+opcua-cli explore opc.tcp://localhost:4840 -u operator -p operator123
+```
+
+Full-screen TUI: tree + details + log panes. Keys: ↑/↓ navigate, →/Enter expand, ← collapse or jump to parent, r refresh Variable value, q/Esc quit. Rejects --json and --debug (would corrupt the TUI); use --debug-stderr or --debug-file=<path>. Linux/macOS only — on Windows prints a clear "not yet supported" error (upstream TUI library does not yet support Windows).
 
 ### generate:nodeset — Generate PHP classes from NodeSet2.xml
 

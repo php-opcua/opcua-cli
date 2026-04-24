@@ -214,6 +214,33 @@ Output:
 
 Subscription mode creates an OPC UA subscription and monitored item. Polling mode calls read() in a loop. Press Ctrl+C to stop.
 
+### explore — Interactive TUI browser
+
+Full-screen terminal UI to navigate the address space with the keyboard. Shows three panes: a collapsible tree on the left, node details on the right, a rolling log at the bottom.
+
+```bash
+opcua-cli explore opc.tcp://localhost:4840
+opcua-cli explore opc.tcp://localhost:4840 -u operator -p operator123
+```
+
+Keybindings:
+
+- ↑ / ↓ — move selection
+- → / Enter — expand the selected node (children are browsed lazily on first expand and cached in memory for the session)
+- ← — collapse the selected node if it is expanded; otherwise move the selection to the parent row
+- r — re-read the Value of the selected Variable (force refresh; the value is auto-read on first selection and cached)
+- q / Esc — quit and restore the terminal state (alternate-screen, raw mode, cursor)
+
+The details pane shows NodeId, BrowseName, DisplayName, NodeClass for every selection. For Variables it additionally shows Value, Type, Status, and Source timestamp, fetched via Client::read() with the standard options/security/trust pipeline.
+
+Implementation: `PhpOpcua\Cli\Commands\ExploreCommand` sets up the TUI terminal (alternate screen, cursor hidden, raw mode) and delegates the state + event loop + rendering to `PhpOpcua\Cli\Tui\ExploreApp`. Children are represented by `PhpOpcua\Cli\Tui\TreeNode`, which deduces `hasChildren` from the NodeClass (Variable / Method / Unspecified default to leaves; everything else is expandable). The TUI layer is built on [`php-tui/php-tui`](https://github.com/php-tui/php-tui) widgets (Block, List, Paragraph, Grid).
+
+Restrictions:
+
+- --json is rejected (TUI cannot produce JSON output)
+- --debug (stdout) is rejected because it would corrupt the TUI; use --debug-stderr or --debug-file=<path> instead
+- Platform: Linux and macOS only. On Windows the command exits with a clear error — upstream TUI library does not yet support Windows (tracked at https://github.com/php-tui/term/pull/15).
+
 ### generate:nodeset — Generate PHP classes from NodeSet2.xml
 
 Parses a NodeSet2.xml file and generates typed PHP code. No server connection required.

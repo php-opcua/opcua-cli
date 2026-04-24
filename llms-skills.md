@@ -16,7 +16,7 @@ Add this file to your AI assistant's context:
 
 A standalone PHP command-line tool for interacting with OPC UA servers. No framework dependencies — just `composer require` and run. Built on `php-opcua/opcua-client`, it provides 10 composable commands with JSON output, security support, and Unix pipe compatibility.
 
-**10 commands**: `browse`, `read`, `write`, `watch`, `endpoints`, `trust`, `trust:list`, `trust:remove`, `generate:nodeset`, `dump:nodeset`
+**11 commands**: `browse`, `read`, `write`, `watch`, `explore` (interactive TUI), `endpoints`, `trust`, `trust:list`, `trust:remove`, `generate:nodeset`, `dump:nodeset`
 
 ---
 
@@ -177,6 +177,45 @@ opcua-cli watch opc.tcp://localhost:4840 "ns=2;i=1001" --json --debug-file=/tmp/
 - Press `Ctrl+C` to stop watching
 - `--json` outputs one JSON object per line (NDJSON) — good for piping to `jq` or log aggregators
 - The `watch` command runs indefinitely until interrupted
+
+---
+
+## Skill: Interactively Explore the Address Space
+
+### When to use
+The user wants to navigate the server address space hands-on without memorising NodeIds or typing `browse` / `read` repeatedly. Ideal first step when approaching an unfamiliar server.
+
+### Code
+```bash
+# Anonymous, no security
+opcua-cli explore opc.tcp://localhost:4840
+
+# With username/password
+opcua-cli explore opc.tcp://localhost:4840 -u operator -p operator123
+
+# With full security (same flags as every other command)
+opcua-cli explore opc.tcp://server:4840 \
+  --security-policy=Basic256Sha256 \
+  --security-mode=SignAndEncrypt \
+  -u operator -p secret
+
+# With debug logs captured to a file (stdout is taken by the TUI)
+opcua-cli explore opc.tcp://localhost:4840 --debug-file=/tmp/opcua.log
+```
+
+### Keybindings inside the TUI
+- `↑` / `↓` — move the selection up / down
+- `→` or `Enter` — expand the selected node (first expand triggers a `browse`; children are cached for the session)
+- `←` — collapse if expanded, otherwise jump the selection to the parent
+- `r` — force-refresh the Value of the selected Variable (auto-read happens on first selection)
+- `q` or `Esc` — quit and restore the terminal
+
+### Important rules
+- `explore` is **interactive** — do not pipe its output and do not combine it with `--json` or `--debug` (both are rejected with a clear error because they would corrupt the TUI surface).
+- For logs while `explore` is running, use `--debug-stderr` (written to stderr, TUI stays clean on stdout) or `--debug-file=<path>` (recommended — tail the file from another terminal).
+- **Linux and macOS only.** On Windows the command exits with exit code 1 and a message pointing to the upstream tracking PR. On Windows, fall back to non-interactive commands (`browse`, `read`, `watch`).
+- The details pane shows `Value` / `Type` / `Status` / `Source` only for nodes whose `NodeClass` is `Variable`. Objects, Methods, etc. show only metadata.
+- Children are browsed **lazily** on first expansion — initial tree load is fast even against large address spaces.
 
 ---
 

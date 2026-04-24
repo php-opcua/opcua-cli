@@ -168,6 +168,33 @@ Output:
 
 Stop with Ctrl+C.
 
+### `explore` — Interactive TUI browser
+
+Full-screen terminal interface to navigate the address space. Three panes: address-space tree (left), node details (right), rolling log (bottom). Keyboard-driven — no commands to type once inside.
+
+```bash
+opcua-cli explore opc.tcp://localhost:4840
+opcua-cli explore opc.tcp://localhost:4840 -u operator -p operator123
+```
+
+Keybindings:
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Move the selection up / down the visible rows |
+| `→` / `Enter` | Expand the selected node (lazy browse: children are fetched from the server on first expand, cached for the session) |
+| `←` | If the selected node is expanded, collapse it; otherwise jump the selection to the parent row |
+| `r` | Re-read the Value of the currently selected Variable (the value is cached the first time you select a Variable; `r` forces a fresh read) |
+| `q` / `Esc` | Quit and restore the terminal |
+
+The details pane shows `NodeId`, `BrowseName`, `DisplayName`, `NodeClass` for every node. For Variables it additionally shows `Value`, `Type`, `Status`, and `Source` timestamp — populated on first selection, refreshed on `r`.
+
+Behaviour notes:
+
+- `--json` and `--debug` are rejected because they would corrupt the TUI. Use `--debug-stderr` or `--debug-file=<path>` if you need logs during an `explore` session.
+- Security, authentication, and trust-store options (`-s`, `-m`, `--cert`, `--key`, `--ca`, `-u`, `-p`, `--trust-store`, `--trust-policy`) behave exactly as in `browse` / `read` / `watch`.
+- On Windows the command exits with a clear error. The underlying TUI library ([`php-tui/php-tui`](https://github.com/php-tui/php-tui)) does not yet support Windows; tracking in [`php-tui/term#15`](https://github.com/php-tui/term/pull/15).
+
 ### `generate:nodeset` — Generate PHP classes from NodeSet2.xml
 
 ```bash

@@ -24,9 +24,13 @@
 
 ---
 
-Command-line tool for OPC UA servers. Browse, read, write, watch, discover endpoints, manage certificates, and generate PHP code from NodeSet2.xml -- all from the terminal.
+Command-line tool for OPC UA servers. Browse, read, write, watch, interactively explore, discover endpoints, manage certificates, and generate PHP code from NodeSet2.xml -- all from the terminal.
 
 Built on top of [`php-opcua/opcua-client`](https://github.com/php-opcua/opcua-client), the pure PHP OPC UA client.
+
+<p align="center">
+  <video src="assets/explorer-command.mp4" controls width="800" alt="opcua-cli explore demo"></video>
+</p>
 
 ## Installation
 
@@ -195,6 +199,27 @@ opcua-cli watch opc.tcp://localhost:4840 "ns=2;i=1001" --interval=250
 ^C
 ```
 
+### `explore` -- Interactive TUI browser
+
+Full-screen terminal UI to walk the address space without typing commands. Tree on the left, details pane on the right (with live Value / Status / Source timestamp for Variables), log pane at the bottom.
+
+```bash
+opcua-cli explore opc.tcp://localhost:4840
+opcua-cli explore opc.tcp://localhost:4840 -u operator -p operator123
+```
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Move selection |
+| `→` / `Enter` | Expand node (browse children) |
+| `←` | Collapse or jump to parent |
+| `r` | Refresh the Value of the selected Variable |
+| `q` / `Esc` | Quit |
+
+**Platform support.** `explore` currently runs on Linux and macOS. Windows support is coming soon.
+
+**Flags.** `--json` and `--debug` are rejected (they would corrupt the interactive screen). Use `--debug-stderr` or `--debug-file=<path>` if you need logs while `explore` is running.
+
 ### `generate:nodeset` -- Generate PHP classes from NodeSet2.xml
 
 ```bash
@@ -331,7 +356,7 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 | Package | Description |
 |---------|-------------|
 | [opcua-client](https://github.com/php-opcua/opcua-client) | Pure PHP OPC UA client |
-| [opcua-cli](https://github.com/php-opcua/opcua-cli) | CLI tool — browse, read, write, watch, discover endpoints, manage certificates, generate code from NodeSet2.xml (this package) |
+| [opcua-cli](https://github.com/php-opcua/opcua-cli) | CLI tool — browse, read, write, watch, interactively explore, discover endpoints, manage certificates, generate code from NodeSet2.xml (this package) |
 | [opcua-session-manager](https://github.com/php-opcua/opcua-session-manager) | Daemon-based session persistence across PHP requests. Keeps OPC UA connections alive between short-lived PHP processes via a ReactPHP daemon and Unix sockets. Separate package by design — see [ROADMAP.md](ROADMAP.md#session-manager-integration-here) for rationale. |
 | [opcua-client-nodeset](https://github.com/php-opcua/opcua-client-nodeset) | Pre-generated PHP types from 51 OPC Foundation companion specifications (DI, Robotics, Machinery, MachineTool, ISA-95, CNC, MTConnect, and more). 807 PHP files — NodeId constants, enums, typed DTOs, codecs, registrars with automatic dependency resolution. Just `composer require` and `loadGeneratedTypes()`. |
 | [laravel-opcua](https://github.com/php-opcua/laravel-opcua) | Laravel integration — service provider, facade, config |
