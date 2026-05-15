@@ -1,0 +1,42 @@
+# Documentation Index
+
+- Getting started
+  - [Overview](./overview.md)
+  - [Installation](./getting-started/installation.md)
+  - [First browse](./getting-started/first-browse.md)
+  - [How it works](./getting-started/how-it-works.md)
+- Commands
+  - [browse](./commands/browse.md)
+  - [read](./commands/read.md)
+  - [write](./commands/write.md)
+  - [endpoints](./commands/endpoints.md)
+  - [watch](./commands/watch.md)
+  - [explore](./commands/explore.md)
+  - [trust](./commands/trust.md)
+  - [generate:nodeset](./commands/generate-nodeset.md)
+  - [dump:nodeset](./commands/dump-nodeset.md)
+- Connecting
+  - [Endpoint URLs](./connecting/endpoint-urls.md)
+  - [Security policies](./connecting/security-policies.md)
+  - [Credentials](./connecting/credentials.md)
+  - [Trust store workflow](./connecting/trust-store-workflow.md)
+- Output
+  - [Output formats](./output/output-formats.md)
+  - [Debug logging](./output/debug-logging.md)
+- Code generation
+  - [Generate from XML](./code-generation/generate-from-xml.md)
+  - [Dump from a server](./code-generation/dump-from-server.md)
+  - [Consuming generated code](./code-generation/consuming-output.md)
+- Building
+  - [PHAR](./building/phar.md)
+  - [Static binary](./building/static-binary.md)
+  - [Troubleshooting](./building/troubleshooting.md)
+- Reference
+  - [Global options](./reference/global-options.md)
+  - [Exit codes](./reference/exit-codes.md)
+  - [Exceptions and errors](./reference/exceptions-and-errors.md)
+- Recipes
+  - [CI smoke test](./recipes/ci-smoke-test.md)
+  - [Batch trust rollout](./recipes/batch-trust-rollout.md)
+  - [Live monitoring with watch](./recipes/live-monitoring-with-watch.md)
+  - [Inventory with dump and grep](./recipes/inventory-with-dump-and-grep.md)

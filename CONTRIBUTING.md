@@ -146,7 +146,7 @@ composer format:check
 - Every public method must have a PHPDoc block with `@param`, `@return`, `@throws`, and `@see` where applicable
 - `@return` and `@param` must be on their own line, not inline with the description
 - **Do not add comments inside function bodies.** No `//`, no `/* */`, no section headers. If the code needs a comment to be understood, the method is too complex — split it into smaller, well-named methods instead. The method name and its PHPDoc should be enough to understand what it does.
-- Update relevant files in `doc/` for new or changed commands
+- Update relevant files in `docs/` for new or changed commands
 - Update `CHANGELOG.md` with your changes
 - Update `README.md` command reference if adding or modifying a command
 
@@ -156,7 +156,7 @@ composer format:check
 2. Register it in `Application::__construct()`
 3. Output through the `OutputInterface` — support both console and JSON formats
 4. Write unit tests (mock the client) and integration tests (against the test server)
-5. Document the command in `doc/01-cli.md` and `README.md`
+5. Document the command in `docs/commands/<command>.md` and `README.md`
 
 ### Testing
 

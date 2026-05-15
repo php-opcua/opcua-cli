@@ -64,11 +64,11 @@ The binaries bundle PHP 8.4, the statically linked OpenSSL (with full ECC curve 
 
 > **macOS note — unsigned binaries.** The macOS artefact for v4.3.0 is **not** code-signed or notarized. On first launch Gatekeeper will refuse to run it ("cannot be opened because the developer cannot be verified"). Strip the quarantine flag with `xattr -cr <binary>` as shown above, or open the binary once via *System Settings → Privacy & Security → Open Anyway*. Code-signing + notarization is tracked for v4.4.0.
 
-> **Intel Mac (`macos-x86_64`) not shipped.** GitHub retired the free `macos-13` runner pool during 2025, so a native Intel build is no longer producible on CI without a paid runner. Intel Mac users should install via Composer (`composer global require php-opcua/opcua-cli`) or build from source — see [`doc/04-build-from-source.md`](doc/04-build-from-source.md). Note that the Apple Silicon binary (`macos-arm64`) **will not** run on Intel Macs: Rosetta 2 translates x86_64 → arm64, not the reverse.
+> **Intel Mac (`macos-x86_64`) not shipped.** GitHub retired the free `macos-13` runner pool during 2025, so a native Intel build is no longer producible on CI without a paid runner. Intel Mac users should install via Composer (`composer global require php-opcua/opcua-cli`) or build from source — see [`docs/building/static-binary.md`](docs/building/static-binary.md). Note that the Apple Silicon binary (`macos-arm64`) **will not** run on Intel Macs: Rosetta 2 translates x86_64 → arm64, not the reverse.
 
-> **Windows note — experimental.** The `windows-x86_64.exe` leg of the release workflow runs with `continue-on-error: true`, so a release is published even if the Windows build fails. If the `.exe` is not listed on a given release page, the Windows build did not complete successfully that cycle — use [`doc/04-build-from-source.md`](doc/04-build-from-source.md) to produce it locally, or wait for the next release. Windows promotion to first-class support is tracked for v4.4.0.
+> **Windows note — experimental.** The `windows-x86_64.exe` leg of the release workflow runs with `continue-on-error: true`, so a release is published even if the Windows build fails. If the `.exe` is not listed on a given release page, the Windows build did not complete successfully that cycle — use [`docs/building/static-binary.md`](docs/building/static-binary.md) to produce it locally, or wait for the next release. Windows promotion to first-class support is tracked for v4.4.0.
 
-Need a binary for a platform not in the list above (Alpine/musl, a different PHP or extension set)? See [`doc/04-build-from-source.md`](doc/04-build-from-source.md) — step-by-step instructions for reproducing the build locally.
+Need a binary for a platform not in the list above (Alpine/musl, a different PHP or extension set)? See [`docs/building/static-binary.md`](docs/building/static-binary.md) — step-by-step instructions for reproducing the build locally.
 
 ### Via Composer
 

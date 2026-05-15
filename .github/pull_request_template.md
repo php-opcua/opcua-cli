@@ -24,7 +24,7 @@ Brief description of the changes.
 
 ## Documentation
 
-- [ ] `doc/` updated (if applicable)
+- [ ] `docs/` updated (if applicable)
 - [ ] `README.md` command reference updated (if applicable)
 - [ ] `CHANGELOG.md` updated
 
