@@ -14,10 +14,16 @@ next: { label: 'Output formats', href: '../output/output-formats.md' }
 # Trust store workflow
 
 The CLI's trust store is a directory of accepted server
-certificates, identified by SHA-256 fingerprint. Most secured
-OPC UA servers will be rejected on first connect — their cert
-isn't in the store yet. This page is the canonical workflow to
-get past that.
+certificates, identified by **SHA-1** fingerprint (hex pairs
+joined by `:`). Most secured OPC UA servers will be rejected on
+first connect — their cert isn't in the store yet. This page is
+the canonical workflow to get past that.
+
+> **Trust store has to be opted in.** The CLI does not install a
+> default trust store on its own. Pass `--trust-store=<path>` (or
+> `--trust-policy=...`) on the command line; only then will the
+> underlying `FileTrustStore` apply its default path resolution
+> (`~/.opcua/` on POSIX, `%APPDATA%\opcua\` on Windows).
 
 ## The path
 
@@ -64,13 +70,12 @@ Exit code: `1`. The CLI exits non-zero with a non-empty stderr
 
 <!-- @code-block language="bash" label="terminal — trust" -->
 ```bash
-$ opcua-cli trust opc.tcp://plc.local:4840
+$ opcua-cli trust opc.tcp://plc.local:4840 --trust-store=/etc/opcua/trust
 
-Server certificate stored.
-  Fingerprint:  a1b2c3d4e5f6...
-  Subject:      CN=PLC-Server, O=ACME
-  Valid:        2026-01-01 to 2027-01-01
-  Stored at:    /home/operator/.opcua/trusted/a1b2c3d4e5f6.der
+Status:      Trusted
+Fingerprint: a1:b2:c3:d4:e5:f6:78:90:12:34:56:78:90:12:34:56:78:90:ab:cd
+Subject:     PLC-Server
+Expires:     2027-01-01T00:00:00+00:00
 ```
 <!-- @endcode-block -->
 
@@ -105,7 +110,7 @@ validation is:
 | Policy                   | Validation                                                          |
 | ------------------------ | ------------------------------------------------------------------- |
 | (default — not set)      | Accept anything (insecure; equivalent to `--no-trust-policy`)       |
-| `fingerprint`            | Cert's SHA-256 fingerprint must be in the trust store               |
+| `fingerprint`            | Cert's SHA-1 fingerprint must be in the trust store                 |
 | `fingerprint+expiry`     | Fingerprint match **and** cert within its validity window           |
 | `full`                   | Full X.509 chain validation against the CA bundle in the trust store |
 
@@ -138,7 +143,10 @@ opcua-cli browse opc.tcp://plc.local:4840 ... --trust-store=/etc/opcua/trust
 <!-- @endcode-block -->
 
 Use a system-wide path (`/etc/opcua/trust`) for shared deployments;
-use the default `~/.opcua/` for per-user installs.
+use `--trust-store="$HOME/.opcua/trust"` (or any per-user path) for
+per-user installs. Remember the CLI does not install a default
+store for you — at least one trust flag must be on the command
+line for any trust-related behaviour.
 
 ## Skipping validation temporarily
 

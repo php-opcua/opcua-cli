@@ -1,6 +1,6 @@
 ---
 eyebrow: 'Docs · Recipes'
-lede:    'Long-running observation of one or many nodes. watch + shell + log rotation = a "good-enough" monitoring rig without a real subscription stack.'
+lede:    'Long-running observation of one or many nodes. watch + shell + log rotation = a "good-enough" monitoring rig built on the CLI''s built-in subscription mode (or its polling fallback).'
 
 see_also:
   - { href: '../commands/watch.md',          meta: '4 min' }
@@ -13,10 +13,12 @@ next: { label: 'Inventory with dump and grep', href: './inventory-with-dump-and-
 
 # Live monitoring with watch
 
-`opcua-cli watch` polls one node at a configured interval. Three
-common patterns get more out of it: NDJSON to file with rotation,
-restart-on-disconnect loops, and multi-node observation by
-spawning watchers in parallel.
+`opcua-cli watch` observes a single node. By default it opens a
+real OPC UA subscription and prints every notification the server
+pushes; pass `--interval=N` (in **milliseconds**) to switch to a
+polling loop instead. Three common patterns get more out of it:
+NDJSON to file with rotation, restart-on-disconnect loops, and
+multi-node observation by spawning watchers in parallel.
 
 ## Pattern 1 — NDJSON to file with rotation
 
@@ -37,7 +39,9 @@ while true; do
     today=$(date -u +%Y%m%d)
     logfile="$LOGDIR/speed-${today}.ndjson"
 
-    opcua-cli watch "$ENDPOINT" "$NODE" --interval=1 --json >> "$logfile" || true
+    # Default: a real OPC UA subscription. Drop --interval to keep
+    # subscription mode; add --interval=1000 (ms) for polling.
+    opcua-cli watch "$ENDPOINT" "$NODE" --json >> "$logfile" || true
 
     # If watch died (connection drop, server restart), wait and retry
     sleep 5
@@ -54,7 +58,7 @@ For more sophisticated rotation, pipe through `cronolog` or
 
 <!-- @code-block language="bash" label="bash — with cronolog" -->
 ```bash
-opcua-cli watch "$ENDPOINT" "$NODE" --interval=1 --json \
+opcua-cli watch "$ENDPOINT" "$NODE" --json \
     | cronolog "$LOGDIR/speed-%Y%m%d.ndjson"
 ```
 <!-- @endcode-block -->
@@ -70,13 +74,17 @@ ENDPOINT="opc.tcp://plc.local:4840"
 NODE="ns=2;s=PLC/Speed"
 THRESHOLD=10.0
 
-opcua-cli watch "$ENDPOINT" "$NODE" --interval=1 --json \
+# `watch --json` emits {"message":"[10:30:00.123] 42.5"} per tick.
+# Extract the numeric value from the message string.
+opcua-cli watch "$ENDPOINT" "$NODE" --json \
     | while IFS= read -r line; do
-        value=$(echo "$line" | jq -r .value)
-        status=$(echo "$line" | jq -r .statusCode)
+        msg=$(echo "$line" | jq -r .message)
+        # Strip the "[HH:MM:SS.mmm] " prefix; whatever's left is the value
+        value=${msg##\[*\] }
 
-        if (( $(echo "$status != 0" | bc -l) )); then
-            echo "Bad status: $status"
+        # Skip null / non-numeric ticks
+        if ! [[ "$value" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "Non-numeric tick: $value"
             continue
         fi
 
@@ -88,8 +96,11 @@ opcua-cli watch "$ENDPOINT" "$NODE" --interval=1 --json \
 ```
 <!-- @endcode-block -->
 
-NDJSON parsed line-by-line with `jq`. Threshold logic in shell;
-alerts go to whatever escalation channel your team uses.
+`watch --json` wraps each tick in `{"message": "[HH:MM:SS.mmm] <value>"}`
+— there is no separate structured `value` / `statusCode` field
+(the JSON backend is a thin wrapper, see [Output
+formats](../output/output-formats.md#section-watch)). Parse the
+string inside `.message` to recover the value or timestamp.
 
 ## Pattern 3 — multi-node observation
 
@@ -112,7 +123,7 @@ for node in "${NODES[@]}"; do
     safe_name=$(echo "$node" | tr -c '[:alnum:]' '_')
     logfile="/var/log/opcua-monitor/${safe_name}.ndjson"
 
-    opcua-cli watch "$ENDPOINT" "$node" --interval=1 --json >> "$logfile" &
+    opcua-cli watch "$ENDPOINT" "$node" --json >> "$logfile" &
     PIDS+=($!)
 done
 
@@ -122,15 +133,14 @@ wait
 ```
 <!-- @endcode-block -->
 
-Each node gets its own watch process and log file. The trap
-ensures `Ctrl-C` cleans up all children.
-
-This is **not the same** as an OPC UA subscription — each
-watcher independently polls the same server. For a few nodes,
-fine; for dozens, it's wasteful (N × per-second round-trips).
-Use a real subscription via
+Each node gets its own watch process, its own session, and its
+own log file. Even though each invocation opens a real
+subscription, you still end up with **N sessions** on the server
+— most servers cap sessions at 100 or fewer. For dozens of
+nodes, switch to a single-process subscription with N monitored
+items via
 [`opcua-client`](https://github.com/php-opcua/opcua-client/blob/master/docs/operations/subscriptions.md)
-or `opcua-session-manager`'s auto-publish for that.
+or `opcua-session-manager`'s auto-publish.
 
 ## Pattern 4 — feed a metrics system
 
@@ -138,21 +148,24 @@ Pipe to a Telegraf/Prometheus pushgateway/InfluxDB shovel:
 
 <!-- @code-block language="bash" label="bash — to InfluxDB" -->
 ```bash
-opcua-cli watch opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" \
-    --interval=1 --json \
+opcua-cli watch opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" --json \
   | while IFS= read -r line; do
-        value=$(echo "$line" | jq -r .value)
-        timestamp=$(echo "$line" | jq -r '.timestamp | sub("\\..+";"") | strptime("%Y-%m-%dT%H:%M:%S") | mktime')
+        msg=$(echo "$line" | jq -r .message)
+        # msg = "[HH:MM:SS.mmm] <value>"
+        value=${msg##\[*\] }
+
+        # Use the host clock; the tick timestamp inside .message is local
+        ns=$(date +%s%N)
 
         curl -s -XPOST "http://influxdb:8086/write?db=plant" \
-            --data-binary "speed,line=A value=$value $((timestamp * 1000000000))"
+            --data-binary "speed,line=A value=$value $ns"
     done
 ```
 <!-- @endcode-block -->
 
 The shell is the slowest part — for high-frequency monitoring
-(sub-100ms intervals), this pattern bottlenecks on `jq` invocations.
-Acceptable for 1-Hz polling.
+(sub-100ms ticks), this pattern bottlenecks on `jq` invocations.
+Acceptable for ~1 Hz monitoring.
 
 For lower-latency metrics, embed `opcua-client` directly and
 push to your metrics system from PHP. The CLI is for ad-hoc
@@ -165,7 +178,6 @@ For diagnostic captures over time:
 <!-- @code-block language="bash" label="bash — watch with debug" -->
 ```bash
 opcua-cli watch opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" \
-    --interval=1 \
     --json \
     --debug-file=/var/log/opcua-watch-debug.log \
     >> /var/log/opcua-watch-data.ndjson
@@ -177,14 +189,16 @@ Rotate both with logrotate.
 
 ## When `watch` is the wrong tool
 
-- **Sub-100ms intervals.** `watch` polls; the OPC UA round-trip
-  has its own latency. Subscriptions push, which can be much
-  faster for high-frequency monitoring.
-- **Many nodes.** N parallel watchers waste round-trips. A real
-  subscription with N monitored items batches everything.
-- **Capturing every change.** A polling interval larger than
-  the change frequency misses changes. Subscriptions push
-  every change.
+- **Sub-100ms polling.** `--interval=N` only sleeps; under tight
+  intervals the shell + per-tick overhead dominates. Stay in the
+  default subscription mode (which is push-driven), or drop down
+  to `opcua-client` for fine-grained control.
+- **Many nodes.** N parallel watchers means N sessions on the
+  server (one per process). A real subscription with N monitored
+  items in a single session batches everything.
+- **`--interval=N` capturing every change.** A polling interval
+  larger than the change frequency misses changes. Use the
+  default (subscription) mode, which pushes every change.
 - **Production monitoring.** A long-running shell script is a
   fragile production-grade monitor. Use a proper subscription-
   consuming worker (`opcua-session-manager` auto-publish +
@@ -215,16 +229,23 @@ set -euo pipefail
 
 ENDPOINT="${OPCUA_ENDPOINT:?required}"
 NODE="${OPCUA_NODE:?required}"
-INTERVAL="${OPCUA_INTERVAL:-1}"
+# Polling mode opt-in: set OPCUA_INTERVAL_MS to a positive integer
+# (in milliseconds). Leave unset to use the default subscription mode.
+INTERVAL_MS="${OPCUA_INTERVAL_MS:-}"
 LOGFILE="${OPCUA_LOGFILE:-/var/log/opcua-watch.ndjson}"
 
 mkdir -p "$(dirname "$LOGFILE")"
+
+interval_flag=()
+if [ -n "$INTERVAL_MS" ]; then
+    interval_flag=(--interval="$INTERVAL_MS")
+fi
 
 while true; do
     echo "$(date -u +%FT%TZ) starting watch" >&2
 
     opcua-cli watch "$ENDPOINT" "$NODE" \
-        --interval="$INTERVAL" \
+        "${interval_flag[@]}" \
         --json \
         --timeout=5 \
       >> "$LOGFILE" \

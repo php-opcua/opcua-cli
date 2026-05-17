@@ -82,13 +82,15 @@ depth.
 <!-- @code-block language="bash" label="terminal — JSON" -->
 ```bash
 opcua-cli browse opc.tcp://plc.local:4840 /Objects --json
-opcua-cli browse opc.tcp://plc.local:4840 /Objects --recursive --depth=2 --json | jq '.[].displayName'
+opcua-cli browse opc.tcp://plc.local:4840 /Objects --recursive --depth=2 --json | jq -r '.[].name'
 ```
 <!-- @endcode-block -->
 
-JSON output is an array of `{ displayName, nodeId, nodeClass, … }`
-objects (or a nested tree for `--recursive`). See [Output
-formats](../output/output-formats.md) for the schema.
+JSON output is an array of `{ name, nodeId, class }` objects, with
+an optional `children` array for `--recursive` results. There is
+no wrapping object with the parent's metadata — the root is the
+array itself. See [Output formats](../output/output-formats.md)
+for the schema.
 
 ### Securely
 
@@ -112,28 +114,29 @@ flow.
 
 ### Default (console output)
 
-A single-level browse prints each child as a row:
+A single-level browse renders the children as a tree, one line
+per child (`├──` / `└──` connectors, display name + NodeId +
+class):
 
 <!-- @code-block language="text" label="console — single level" -->
 ```text
-DisplayName              NodeId                        NodeClass
-Server                   i=2253                        Object
-DeviceSet                ns=2;i=5001                   Object
-Aliases                  ns=2;i=5002                   Object
+├── Server (i=2253) [Object]
+├── DeviceSet (ns=2;i=5001) [Object]
+└── Aliases (ns=2;i=5002) [Object]
 ```
 <!-- @endcode-block -->
 
-A `--recursive` browse prints a tree:
+A `--recursive` browse prints a deeper tree using the same
+connectors:
 
 <!-- @code-block language="text" label="console — tree" -->
 ```text
-Objects
-├── Server
-│   ├── ServerArray
-│   ├── NamespaceArray
-│   └── ServerStatus
-└── DeviceSet
-    └── PLC1
+├── Server (i=2253) [Object]
+│   ├── ServerArray (i=2254) [Variable]
+│   ├── NamespaceArray (i=2255) [Variable]
+│   └── ServerStatus (i=2256) [Variable]
+└── DeviceSet (ns=2;i=5001) [Object]
+    └── PLC1 (ns=2;i=5002) [Object]
         └── …
 ```
 <!-- @endcode-block -->
@@ -143,26 +146,33 @@ Objects
 <!-- @code-block language="text" label="JSON — single level" -->
 ```text
 [
-  {"displayName": "Server", "nodeId": "i=2253", "nodeClass": "Object"},
-  {"displayName": "DeviceSet", "nodeId": "ns=2;i=5001", "nodeClass": "Object"},
-  ...
+  {"name": "Server", "nodeId": "i=2253", "class": "Object"},
+  {"name": "DeviceSet", "nodeId": "ns=2;i=5001", "class": "Object"}
 ]
 ```
 <!-- @endcode-block -->
 
 <!-- @code-block language="text" label="JSON — recursive" -->
 ```text
-{
-  "nodeId": "i=85",
-  "displayName": "Objects",
-  "nodeClass": "Object",
-  "children": [
-    {"nodeId": "i=2253", "displayName": "Server", "children": [...]},
-    ...
-  ]
-}
+[
+  {
+    "name": "Server",
+    "nodeId": "i=2253",
+    "class": "Object",
+    "children": [
+      {"name": "ServerStatus", "nodeId": "i=2256", "class": "Variable"}
+    ]
+  },
+  {"name": "DeviceSet", "nodeId": "ns=2;i=5001", "class": "Object"}
+]
 ```
 <!-- @endcode-block -->
+
+The `--recursive` output is just the same flat array, nested via
+`children` — there is **no** wrapping object carrying the parent
+node's metadata. Field names are `name` / `nodeId` / `class`
+(PascalCase / camelCase as shown), not `displayName` /
+`nodeClass`.
 
 ## How it maps to the library
 

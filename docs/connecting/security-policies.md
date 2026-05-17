@@ -20,10 +20,14 @@ two flags.
 
 ## The flags
 
-| Short | Long                       | Default | Effect                                                            |
-| ----- | -------------------------- | ------- | ----------------------------------------------------------------- |
-| `-s`  | `--security-policy=POLICY` | `None`  | Algorithm suite name                                              |
-| `-m`  | `--security-mode=MODE`     | `None`  | `None`, `Sign`, or `SignAndEncrypt`                              |
+| Short | Long                       | Default        | Effect                                                            |
+| ----- | -------------------------- | -------------- | ----------------------------------------------------------------- |
+| `-s`  | `--security-policy=POLICY` | inherited (`None` from the underlying `ClientBuilder` when the flag is absent) | Algorithm suite name |
+| `-m`  | `--security-mode=MODE`     | inherited (`None`) | `None`, `Sign`, or `SignAndEncrypt`                          |
+
+When the flag is omitted, the CLI does not call the corresponding
+`ClientBuilder` setter at all — the channel inherits whatever
+default `opcua-client`'s builder uses (currently `None` for both).
 
 ## Accepted policy values
 
@@ -172,9 +176,14 @@ errors](../reference/exceptions-and-errors.md).
 
 ## Without a client certificate
 
-If you set a non-`None` policy but **don't** pass `--cert` /
-`--key`, the library generates a self-signed certificate on the
-fly. Fine for dev; not for production — the certificate changes
-every CLI invocation, the server's trust store sees a new
-identity each time. See
-[Credentials · Auto-generated certificate](./credentials.md#section-auto-generated-certificate).
+If you set a non-`None` policy but **don't** pass both `--cert`
+and `--key`, the CLI silently skips installing a client
+certificate (`setClientCertificate()` is only called when both
+paths are strings). With no cert in place, `opcua-client` cannot
+bring up the secure channel and the connection fails with a
+security error.
+
+You must supply your own client certificate — there is no
+auto-generation path. See
+[Credentials · You must supply your own certificate](./credentials.md#section-you-must-supply-your-own-certificate)
+for an OpenSSL-based recipe.

@@ -124,25 +124,17 @@ constants).
 
 ## With opcua-session-manager
 
-`ManagedClient` exposes the same `loadGeneratedTypes()` entry
-point — accumulates onto the local builder, sends the
-configuration to the daemon as part of the `open` IPC command:
+`opcua-session-manager`'s `ManagedClient` does **not** expose a
+`loadGeneratedTypes()` method directly — that entry point lives on
+`opcua-client`'s `ClientBuilder`, which the managed client wraps
+but does not surface. To get typed decoding through the daemon
+today, configure the registrar on the daemon side (in the worker
+process that constructs the underlying `ClientBuilder`) rather
+than via a per-`ManagedClient` call.
 
-<!-- @code-block language="php" label="managed-client integration" -->
-```php
-use PhpOpcua\SessionManager\Client\ManagedClient;
-
-$client = new ManagedClient('/tmp/opcua-session-manager.sock');
-$client->loadGeneratedTypes(new MyVendorRegistrar());
-$client->connect('opc.tcp://plc.local:4840');
-
-// Same auto-cast and DTO decoding semantics
-$state = $client->read(MyVendorNodeIds::PumpState)->getValue();
-```
-<!-- @endcode-block -->
-
-The daemon decodes ExtensionObjects on the server side and
-returns typed DTOs through the IPC layer.
+See the session-manager docs for the current pattern; if your
+application needs in-process typed decoding, drop down to
+`opcua-client` directly and call `loadGeneratedTypes()` there.
 
 ## Where to put the generated code
 

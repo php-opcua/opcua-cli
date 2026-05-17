@@ -126,30 +126,39 @@ Same `Error: <message>` shape on stderr. Exit `1`.
 
 ## With `--json`
 
-When `--json` is set, the CLI emits errors as JSON on stdout
-(instead of the human-readable form on stderr):
+When `--json` is set, the CLI emits errors as JSON on **stderr**
+(`JsonOutput::error()` writes to the stderr stream). The shape is
+a single-key object:
 
-<!-- @code-block language="text" label="JSON — error" -->
+<!-- @code-block language="text" label="JSON — error (stderr)" -->
 ```text
-{"error":"Server certificate not trusted.","fingerprint":"a1b2c3..."}
+{"error":"Server certificate not trusted."}
 ```
 <!-- @endcode-block -->
 
-The JSON keys vary by error type. Always present: `error`
-(the message). Additional fields:
+`error` is the only key. Additional context (the fingerprint of
+an untrusted certificate, follow-up commands, the bad status name)
+is emitted as separate `error()` calls — i.e. **separate JSON
+lines** on stderr:
 
-| Field             | When                                            |
-| ----------------- | ----------------------------------------------- |
-| `fingerprint`     | `UntrustedCertificateException`                 |
-| `statusCode`      | `ServiceException` (numeric OPC UA status)      |
-| `statusName`      | `ServiceException` (named OPC UA status)        |
+<!-- @code-block language="text" label="JSON — untrusted cert, stderr" -->
+```text
+{"error":"Error: Server certificate not trusted."}
+{"error":"  Fingerprint: a1:b2:c3:d4:..."}
+```
+<!-- @endcode-block -->
 
-Parse with `jq`:
+The CLI does **not** combine the fingerprint, status code, or
+status name into the same JSON object as `error`. Each
+`error()` call is wrapped independently.
+
+To capture and parse, redirect stderr to stdout (or to a file)
+and feed the lines through `jq`:
 
 <!-- @code-block language="bash" label="bash — JSON error" -->
 ```bash
-out=$(opcua-cli read opc.tcp://plc.local:4840 i=99999 --json)
-err=$(echo "$out" | jq -r '.error // empty')
+out=$(opcua-cli read opc.tcp://plc.local:4840 i=99999 --json 2>&1 >/dev/null)
+err=$(echo "$out" | jq -rs '[.[].error] | join(" / ")' 2>/dev/null)
 if [ -n "$err" ]; then
     echo "Failed: $err"
     exit 1
@@ -163,23 +172,24 @@ See [Output formats](../output/output-formats.md#section-errors).
 
 Per-item bad statuses from multi-operation services (none
 currently exposed at the CLI level — `read` and `write` are
-single-node) don't reach the exception handlers. They surface
-in the JSON output's `statusCode` field for `read` and `write`.
-The exit code is still `1` for non-Good statuses.
+single-node) don't reach the exception handlers. They surface in
+the JSON output's `Status` field for `read` and `write` as a
+combined `"Bad… (0x...)"` string. The exit code is still `1` for
+non-Good statuses.
 
 ## Sanitisation
 
-The CLI does not sanitise exception messages further than
-`opcua-client` does. The library's error path:
+The CLI does **not** sanitise messages on its own — neither the
+human-readable stderr output nor the JSON `error` line is filtered
+inside `opcua-cli`. Whatever the upstream `opcua-client` exception
+contains is forwarded verbatim.
 
-- Doesn't expose tokens or passwords.
-- Strips URL credentials in error messages (`opc.tcp://user:pwd@host`
-  becomes `opc.tcp://[user]@host`).
-- Strips filesystem paths when sensitive.
-
-The CLI passes the (already sanitised) message through to
-stderr or to the JSON output. See [`opcua-client` error
-handling](https://github.com/php-opcua/opcua-client/blob/master/docs/reference/exceptions.md).
+In practice, the library's exception messages do not surface
+authentication tokens or password bodies, but this depends
+entirely on the library's own conventions. Review the error text
+before sharing it externally, and refer to [`opcua-client` error
+handling](https://github.com/php-opcua/opcua-client/blob/master/docs/reference/exceptions.md)
+for the upstream contract.
 
 ## When you need typed errors
 

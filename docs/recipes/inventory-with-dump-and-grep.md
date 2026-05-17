@@ -167,9 +167,12 @@ xmlstarlet sel -N u="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" \
 ```
 <!-- @endcode-block -->
 
-For each method NodeId, you can then `opcua-cli call <endpoint>
-<methodId>` against the live server (or browse to find its
-arguments).
+The CLI itself does not currently expose a `call` subcommand —
+to invoke a method against the live server, drop down to
+`opcua-client` directly (`$client->callMethod(...)`). The
+inventory step above is still useful as a discovery aid: you get
+the catalogue of method NodeIds and their browse names, then
+script the actual invocation in PHP.
 
 ## Extracting enum definitions
 

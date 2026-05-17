@@ -19,40 +19,52 @@ command page.
 
 ## Security
 
-| Short | Long                       | Default      | Accepts                                                        |
-| ----- | -------------------------- | ------------ | -------------------------------------------------------------- |
-| `-s`  | `--security-policy=POLICY` | `None`       | `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep`, `Aes256Sha256RsaPss`, `EccNistP256`, `EccNistP384`, `EccBrainpoolP256r1`, `EccBrainpoolP384r1`, or the full URI |
-| `-m`  | `--security-mode=MODE`     | `None`       | `None`, `Sign`, `SignAndEncrypt`                              |
-|       | `--cert=PATH`              | none         | PEM-encoded client certificate                                |
-|       | `--key=PATH`               | none         | PEM-encoded client private key                                |
-|       | `--ca=PATH`                | none         | PEM-encoded CA bundle for chain validation                    |
+| Short | Long                       | Default                                                       | Accepts                                                        |
+| ----- | -------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `-s`  | `--security-policy=POLICY` | inherited from `ClientBuilder` (currently `None`)              | `None`, `Basic128Rsa15`, `Basic256`, `Basic256Sha256`, `Aes128Sha256RsaOaep`, `Aes256Sha256RsaPss`, `EccNistP256`, `EccNistP384`, `EccBrainpoolP256r1`, `EccBrainpoolP384r1`, or the full URI |
+| `-m`  | `--security-mode=MODE`     | inherited from `ClientBuilder` (currently `None`)              | `None`, `Sign`, `SignAndEncrypt`                              |
+|       | `--cert=PATH`              | none                                                           | PEM-encoded client certificate                                |
+|       | `--key=PATH`               | none                                                           | PEM-encoded client private key                                |
+|       | `--ca=PATH`                | none                                                           | PEM-encoded CA bundle for chain validation                    |
+
+When a security / mode / timeout / auth flag is omitted, the CLI
+does not call the corresponding `ClientBuilder` setter at all —
+the connection inherits whatever default the underlying
+`opcua-client` builder uses.
 
 See [Connecting · Security policies](../connecting/security-policies.md).
 
 ## Authentication
 
-| Short | Long                  | Default       | Effect                                                |
-| ----- | --------------------- | ------------- | ----------------------------------------------------- |
-| `-u`  | `--username=USER`     | (anonymous)   | Username for session-level identity                  |
-| `-p`  | `--password=PASS`     | (none)        | Password for session-level identity                  |
+| Short | Long                  | Default       | Effect                                                                                          |
+| ----- | --------------------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| `-u`  | `--username=USER`     | (anonymous)   | Username for session-level identity (only applied when both `-u` and `-p` are present)         |
+| `-p`  | `--password=PASS`     | (none)        | Password for session-level identity (only applied when both `-u` and `-p` are present)         |
+
+If only one of `-u` / `-p` is set, the CLI silently skips
+installing credentials and the session connects anonymously.
 
 See [Connecting · Credentials](../connecting/credentials.md).
 
 ## Trust store
 
-| Long                       | Default       | Effect                                                              |
-| -------------------------- | ------------- | ------------------------------------------------------------------- |
-| `--trust-store=PATH`       | `~/.opcua/`   | Override the trust store directory                                  |
-| `--trust-policy=POLICY`    | (none)        | Validation policy: `fingerprint`, `fingerprint+expiry`, `full`     |
-| `--no-trust-policy`        | off           | Disable trust validation for this command (insecure — use sparingly) |
+| Long                       | Default                                                                                  | Effect                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `--trust-store=PATH`       | (no trust store is installed unless this or `--trust-policy=...` is passed)               | Path to the trust store directory                                   |
+| `--trust-policy=POLICY`    | (none — also implicitly enables a `FileTrustStore` at the path from `--trust-store=...`)  | Validation policy: `fingerprint`, `fingerprint+expiry`, `full`     |
+| `--no-trust-policy`        | off                                                                                       | Disable trust validation for this command (insecure — use sparingly) |
+
+When `--trust-store=PATH` is omitted but `--trust-policy=...` is
+set, the underlying `FileTrustStore` resolves its own default
+(`~/.opcua/` on POSIX, `%APPDATA%\opcua\` on Windows).
 
 See [Connecting · Trust store workflow](../connecting/trust-store-workflow.md).
 
 ## Network
 
-| Short | Long                  | Default | Effect                              |
-| ----- | --------------------- | ------- | ----------------------------------- |
-| `-t`  | `--timeout=SECONDS`   | `5`     | Connection / per-call timeout       |
+| Short | Long                  | Default                                                | Effect                              |
+| ----- | --------------------- | ------------------------------------------------------- | ----------------------------------- |
+| `-t`  | `--timeout=SECONDS`   | inherited from `ClientBuilder` (currently 5 s)          | Connection / per-call timeout       |
 
 ## Output
 
@@ -106,10 +118,13 @@ opcua-cli read   opc.tcp://plc.local:4840 i=2261 -j
 ```
 <!-- @endcode-block -->
 
-Short flags **without** values (boolean-style: `-j`, `-h`, `-v`)
-can be combined though the parser. Mixing combined boolean flags
-with valued flags in one argument is not supported — `-ju` is
-not the same as `-j -u …`.
+Short flags **cannot** be combined into one argument. The parser
+takes everything after the leading `-` as a single option name,
+looks it up in the short-alias table, and falls back to using the
+raw string as a long option name. So `-jd` would be parsed as a
+single unknown option named `jd` (set to `true`) — **not** as
+`-j -d`. Always write each short flag as its own argument:
+`-j -d`, not `-jd`.
 
 ## Order of arguments
 

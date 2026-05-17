@@ -54,16 +54,18 @@ Output (against a vanilla open62541 instance):
 
 <!-- @code-block language="text" label="output" -->
 ```text
-Server (Object)
-DeviceSet (Object)
-Aliases (Object)
-PublishSubscribe (Object)
+├── Server (i=2253) [Object]
+├── DeviceSet (ns=2;i=5001) [Object]
+├── Aliases (ns=2;i=5002) [Object]
+└── PublishSubscribe (ns=0;i=14443) [Object]
 ```
 <!-- @endcode-block -->
 
 That is the canonical first browse — the root `Objects` folder
-(`i=85`) and its immediate children. Every OPC UA server exposes
-some variant of this.
+(`i=85`) and its immediate children, rendered as a tree with the
+node display name, the canonical NodeId in parentheses, and the
+node class in brackets. Every OPC UA server exposes some variant
+of this.
 
 ## Drill down
 
@@ -75,16 +77,16 @@ opcua-cli browse opc.tcp://localhost:4840 /Objects/Server
 
 <!-- @code-block language="text" label="output" -->
 ```text
-ServerArray (Variable)
-NamespaceArray (Variable)
-ServerStatus (Variable)
-ServiceLevel (Variable)
-Auditing (Variable)
-ServerCapabilities (Object)
-ServerDiagnostics (Object)
-VendorServerInfo (Object)
-ServerRedundancy (Object)
-Namespaces (Object)
+├── ServerArray (i=2254) [Variable]
+├── NamespaceArray (i=2255) [Variable]
+├── ServerStatus (i=2256) [Variable]
+├── ServiceLevel (i=2267) [Variable]
+├── Auditing (i=2994) [Variable]
+├── ServerCapabilities (i=2268) [Object]
+├── ServerDiagnostics (i=2274) [Object]
+├── VendorServerInfo (i=2295) [Object]
+├── ServerRedundancy (i=2296) [Object]
+└── Namespaces (i=11715) [Object]
 ```
 <!-- @endcode-block -->
 
@@ -102,7 +104,13 @@ opcua-cli read opc.tcp://localhost:4840 i=2261
 
 <!-- @code-block language="text" label="output" -->
 ```text
-"open62541 OPC UA Server"
+NodeId:    i=2261
+Attribute: Value
+Value:     open62541 OPC UA Server
+Type:      String
+Status:    Good (0x00000000)
+Source:    2026-05-15T10:30:00+00:00
+Server:    2026-05-15T10:30:00+00:00
 ```
 <!-- @endcode-block -->
 
@@ -121,12 +129,18 @@ opcua-cli endpoints opc.tcp://localhost:4840
 
 <!-- @code-block language="text" label="output" -->
 ```text
-URL                                Security                    Mode           Auth
-opc.tcp://localhost:4840           None                         None           Anonymous
-opc.tcp://localhost:4840           Basic256Sha256              Sign           Anonymous, Username
-opc.tcp://localhost:4840           Basic256Sha256              SignAndEncrypt Anonymous, Username, Certificate
-opc.tcp://localhost:4840           Aes128Sha256RsaOaep         Sign           Anonymous
-…
+
+Endpoint: opc.tcp://localhost:4840
+Security: None (mode: None)
+Auth:     Anonymous
+
+Endpoint: opc.tcp://localhost:4840
+Security: Basic256Sha256 (mode: Sign)
+Auth:     Anonymous, Username
+
+Endpoint: opc.tcp://localhost:4840
+Security: Basic256Sha256 (mode: SignAndEncrypt)
+Auth:     Anonymous, Username, Certificate
 ```
 <!-- @endcode-block -->
 
@@ -140,16 +154,16 @@ Every command supports `--json` for scripting:
 
 <!-- @code-block language="bash" label="terminal" -->
 ```bash
-opcua-cli endpoints opc.tcp://localhost:4840 --json | jq '.endpoints[].securityPolicy'
+opcua-cli endpoints opc.tcp://localhost:4840 --json | jq -r '.[].Security'
 ```
 <!-- @endcode-block -->
 
 <!-- @code-block language="text" label="output" -->
 ```text
-"None"
-"Basic256Sha256"
-"Basic256Sha256"
-"Aes128Sha256RsaOaep"
+None (mode: None)
+Basic256Sha256 (mode: Sign)
+Basic256Sha256 (mode: SignAndEncrypt)
+Aes128Sha256RsaOaep (mode: Sign)
 ```
 <!-- @endcode-block -->
 

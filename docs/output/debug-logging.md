@@ -40,43 +40,49 @@ Error: --debug and --json cannot be used together. Use --debug-stderr or --debug
 
 ## What gets logged
 
-Per-call detail. A `browse` invocation with `--debug` looks like:
+Whatever `opcua-client` chooses to log at PSR-3 `debug` level —
+the CLI sets up the sink and passes it through. Each log call
+becomes one line via `StreamLogger`:
 
 <!-- @code-block language="text" label="sample debug output" -->
 ```text
-[2026-05-15T10:30:00Z] DEBUG opcua.transport.hello {"endpoint":"opc.tcp://plc.local:4840"}
-[2026-05-15T10:30:00Z] DEBUG opcua.transport.ack
-[2026-05-15T10:30:00Z] DEBUG opcua.discovery.start
-[2026-05-15T10:30:00Z] DEBUG opcua.discovery.endpoints {"count":4}
-[2026-05-15T10:30:00Z] DEBUG opcua.opn.request {"requestId":1,"policy":"None"}
-[2026-05-15T10:30:00Z] DEBUG opcua.opn.response {"requestId":1,"duration_ms":12}
-[2026-05-15T10:30:00Z] DEBUG opcua.session.create {"requestId":2}
-[2026-05-15T10:30:00Z] DEBUG opcua.session.activate {"requestId":3}
-[2026-05-15T10:30:00Z] DEBUG opcua.browse.request {"requestId":4,"nodeId":"i=85"}
-[2026-05-15T10:30:00Z] DEBUG opcua.browse.response {"requestId":4,"refs":4,"duration_ms":3}
-[2026-05-15T10:30:00Z] DEBUG opcua.session.close
-[2026-05-15T10:30:00Z] DEBUG opcua.transport.close
+[10:30:00.123] [debug] Hello sent to opc.tcp://plc.local:4840
+[10:30:00.137] [debug] Ack received
+[10:30:00.150] [debug] OpenSecureChannel request 1 with policy None
+[10:30:00.162] [debug] OpenSecureChannel response 1 in 12 ms
+[10:30:00.171] [debug] CreateSession request 2
+[10:30:00.190] [debug] Browse request 4 for nodeId i=85
+[10:30:00.193] [debug] Browse response 4 with 4 refs in 3 ms
 ```
 <!-- @endcode-block -->
 
-The format is one line per event: ISO timestamp, level, channel,
-JSON-shaped context.
+The exact format is `[HH:MM:SS.mmm] [<level>] <message>` —
+local-time timestamp with millisecond resolution, the level
+lowercased and bracketed (`[debug]`, `[info]`, `[warning]`),
+then the interpolated message. PSR-3 placeholders (`{key}`) are
+substituted from the context array; **any context keys that
+aren't referenced in the message are dropped** (the formatter
+does not append a JSON blob).
 
 ## What does *not* get logged
 
-The CLI is conservative about what it logs:
+`StreamLogger` itself does no redaction — it formats whatever the
+upstream client emits. Whether credentials, tokens or value
+payloads appear in the log depends entirely on `opcua-client`'s
+own logging conventions:
 
-- **Authentication tokens** — `getAuthToken()` is opaque; never
-  serialised into the context.
-- **Username / password values** — credentials never appear in
-  log output.
-- **Certificate bodies** — only fingerprints, at trust
-  decisions.
-- **Variant `value` fields** — read responses log only
-  `statusCode` and the NodeId, not the value. (The value is
-  printed by the command itself to stdout, separately.)
+- Authentication tokens, username / password values, and
+  certificate bodies are not expected in `opcua-client`'s log
+  calls, but the CLI doesn't enforce this. If you change PHP
+  versions or upgrade the library and a log line surfaces a new
+  field, the CLI will pass it through verbatim.
+- Variant `value` fields from read / publish responses are not
+  generally logged either, but again the CLI cannot guarantee
+  this on behalf of the upstream library.
 
-The trace is safe to share with vendors and support teams.
+Treat the debug trace as **possibly sensitive** — review it
+before attaching to vendor support tickets, especially when the
+session involved a username / password handshake or a write call.
 
 ## `--debug` on stdout
 
@@ -179,17 +185,17 @@ opcua-cli read opc.tcp://plc.local:4840 i=2261 \
 ```
 <!-- @endcode-block -->
 
-The file contains every protocol step. Sanitised by the CLI's
-own log conventions (no credentials, no values), so it's safe
-to attach.
+The file contains every protocol step `opcua-client` chooses to
+emit. Before attaching to a support ticket, scan it for anything
+sensitive — the CLI does not redact log output on its own.
 
 **Tail the log live during a watch:**
 
 <!-- @code-block language="bash" label="bash — tail during watch" -->
 ```bash
-# Terminal 1
+# Terminal 1 — default subscription mode + debug to file
 opcua-cli watch opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" \
-    --interval=0.5 --debug-file=/tmp/watch.log &
+    --debug-file=/tmp/watch.log &
 
 # Terminal 2
 tail -f /tmp/watch.log

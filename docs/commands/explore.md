@@ -30,40 +30,49 @@ starts the TUI, exits when you press `q`.
 
 <!-- @code-block language="text" label="layout" -->
 ```text
-┌─ Address Space ─────────────────────┐┌─ Value ─────────────────────────────┐
-│ ▾ Objects                           ││ NodeId:  ns=2;s=PLC/Speed           │
-│   ▾ Server                          ││ Value:   42.5                       │
-│     • ServerArray                   ││ Type:    Double                     │
-│     • NamespaceArray                ││ Status:  Good                       │
-│     • ServerStatus                  ││ Source:  2026-05-15T10:30:00Z       │
-│   ▾ DeviceSet                       ││                                     │
-│     ▾ PLC1                          ││                                     │
-│       • Speed         (selected)    ││                                     │
-│       • Mode                        ││                                     │
+┌ Address space ──────────────────────┐┌ Details ────────────────────────────┐
+│ ▾ Objects                           ││ NodeId:      ns=2;s=PLC/Speed       │
+│   ▾ Server                          ││ BrowseName:  2:Speed                │
+│     • ServerArray                   ││ DisplayName: Speed                  │
+│     • NamespaceArray                ││ NodeClass:   Variable               │
+│     • ServerStatus                  ││                                     │
+│   ▾ DeviceSet                       ││ Value:       42.5                   │
+│     ▾ PLC1                          ││ Type:        Double                 │
+│       › Speed                       ││ Status:      Good (0x00000000)      │
+│       • Mode                        ││ Source:      2026-05-15T10:30:00+00:00 │
 │       • Health                      ││                                     │
 └─────────────────────────────────────┘└─────────────────────────────────────┘
-─ Log ────────────────────────────────────────────────────────────────────────
-  [10:30:00] Connected. Browsing Objects folder (i=85)...
-  [10:30:02] Selected ns=2;s=PLC/Speed
-──────────────────────────────────────────────────────────────────────────────
-  ↑/↓ navigate  ←/→ collapse/expand  r reload value  q quit
+┌ Log — q=quit  ↑↓=move  →/Enter=expand  ←=collapse/up  r=refresh ───────────┐
+│ [10:30:00] Connected. Browsing Objects folder (i=85)...                    │
+│ [10:30:00] Loaded 4 root children.                                          │
+│ [10:30:02] Browsed ns=2;s=PLC: 3 children.                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 <!-- @endcode-block -->
 
-The screen has three regions: the tree (left, scrollable), the
-selected node's details (right), the log (bottom).
+The screen has three regions: the address-space tree (left,
+scrollable), the selected node's details (right), and the log
+pane (bottom). The pane titles are literally `Address space`,
+`Details`, and `Log — …` (the log border carries the keybinding
+hint).
+
+Only `browse` / `read` / connection-level events appear in the
+log — moving the selection with the arrow keys doesn't log
+anything.
 
 ## Keybindings
 
 | Key                  | Action                                                    |
 | -------------------- | --------------------------------------------------------- |
 | `↑` / `↓`            | Move selection                                             |
-| `→` or `Enter`       | Expand a folder / object node                              |
-| `←`                  | Collapse the current node                                  |
-| `r`                  | Reload the value of the selected node (force a fresh read) |
-| `q`                  | Quit and disconnect                                        |
+| `→` or `Enter`       | Expand the selected node (loads its children on first use) |
+| `←`                  | Collapse the current node; if already collapsed, move selection up to the parent |
+| `r`                  | Refresh the value of the selected Variable (force a fresh read) |
+| `q` or `Esc`         | Quit and disconnect                                        |
 
-The TUI is keyboard-only — no mouse support.
+The TUI is keyboard-only — no mouse handler is wired up
+(`php-tui` exposes mouse events, but `ExploreApp` does not
+consume them).
 
 ## What happens under the covers
 
@@ -83,8 +92,8 @@ The application:
   appears in the log pane. Useful for understanding what
   triggered each round-trip.
 
-- **Polls keystrokes** at ~20 Hz. Snappy on every modern
-  terminal.
+- **Drains input then sleeps 50 ms** per loop iteration —
+  effectively a ~20 Hz tick. Snappy on every modern terminal.
 <!-- @endsteps -->
 
 ## When to use it

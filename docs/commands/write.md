@@ -70,14 +70,19 @@ to the same node skip the read.
 ```bash
 opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Setpoint" 42.5 --type=Float
 opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Count"    42   --type=UInt32
-opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Bytes"    deadbeef --type=ByteString
+opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Name"     "Conveyor1" --type=String
 ```
 <!-- @endcode-block -->
 
-Recognised type names match the `BuiltinType` enum: `Boolean`,
-`SByte`, `Byte`, `Int16`, `UInt16`, `Int32`, `UInt32`, `Int64`,
-`UInt64`, `Float`, `Double`, `String`, `DateTime`, `Guid`,
-`ByteString`, `NodeId`.
+The CLI's `TYPE_MAP` recognises these twelve names — anything else
+returns `"Unknown type 'X'. Valid types: …"` and exits non-zero:
+
+`Boolean`, `SByte`, `Byte`, `Int16`, `UInt16`, `Int32`, `UInt32`,
+`Int64`, `UInt64`, `Float`, `Double`, `String`.
+
+`ByteString`, `DateTime`, `Guid`, `NodeId`, `XmlElement` and other
+OPC UA built-in types are **not** in the lookup table — to write
+them, drop down to `opcua-client` directly.
 
 ### JSON output
 
@@ -90,17 +95,33 @@ opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Setpoint" 42.5 --json
 <!-- @code-block language="text" label="JSON output" -->
 ```text
 {
-  "nodeId": "ns=2;s=PLC/Setpoint",
-  "value": 42.5,
-  "type": "Double",
-  "statusCode": 0,
-  "statusName": "Good"
+  "NodeId": "ns=2;s=PLC/Setpoint",
+  "Value": "42.5",
+  "Type": "Double",
+  "Status": "Good (0x00000000)"
 }
 ```
 <!-- @endcode-block -->
 
-For scripting: parse `.statusCode` (0 = Good) or `.statusName` to
-branch on success.
+Four fields, all strings, PascalCase keys (`JsonOutput` is a thin
+`json_encode` wrapper — see [Output formats](../output/output-formats.md)).
+There is no separate `statusCode` integer or `statusName` —
+`Status` is a combined string `"<Name> (0x<hex>)"`.
+
+For scripting, branch on `.Status` directly:
+
+<!-- @code-block language="bash" label="bash — branch on status" -->
+```bash
+status=$(opcua-cli write opc.tcp://plc.local:4840 "ns=2;s=PLC/Setpoint" 42.5 --json | jq -r .Status)
+case "$status" in
+    Good*)              echo "write OK" ;;
+    Bad*)               echo "write failed: $status" ;;
+    *)                  echo "unexpected: $status" ;;
+esac
+```
+<!-- @endcode-block -->
+
+Or just rely on the exit code — `0` only when the status is `Good`.
 
 ### Writing an array
 
@@ -167,8 +188,9 @@ See [`opcua-client` — writing values](https://github.com/php-opcua/opcua-clien
 | `BadOutOfRange`            | The value is outside the engineering range               |
 | `BadWriteNotSupported`     | The attribute / node is read-only                        |
 
-Catch these in scripts via `--json | jq .statusName` or by
-inspecting the exit code + stderr.
+Catch these in scripts via `--json | jq -r .Status` (matches on
+the combined `"BadXxx (0x...)"` string) or by inspecting the exit
+code + stderr.
 
 ## Common pitfalls
 

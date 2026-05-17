@@ -142,24 +142,19 @@ references it. Pick something meaningful per environment.
 For full certificate generation patterns (CA-signed, ECC, …),
 see [`opcua-client` — security](https://github.com/php-opcua/opcua-client/blob/master/docs/security/overview.md).
 
-## Auto-generated certificate
+## You must supply your own certificate
 
-If you pass `-s Basic256Sha256` without `--cert` / `--key`, the
-library generates a self-signed certificate on the fly. **Each
-invocation generates a new one** — the fingerprint changes every
-time, and the server's trust store sees a new identity per
-invocation.
+The CLI does **not** auto-generate a client certificate. If you
+configure a non-`None` security policy without `--cert` and
+`--key`, the underlying `opcua-client` library refuses to bring
+up the secure channel and the connection fails with a security
+error.
 
-This is convenient for development but disastrous for production:
-
-| Aspect                              | Auto-generated   | Provided via `--cert`               |
-| ----------------------------------- | ---------------- | ----------------------------------- |
-| Cost on first connect               | Zero setup        | Generate once, distribute            |
-| Stable identity across invocations | **No**            | Yes                                  |
-| Server-side trust manageable        | Painful (rotating fingerprints) | One fingerprint to trust |
-| Production-suitable                | No                | Yes                                  |
-
-For any non-trivial use, generate a cert once and pass it.
+Generate the cert once with the OpenSSL snippet above (or your
+PKI's normal client-cert workflow), persist it, and pass it on
+every invocation. For longer-form patterns — CA-issued certs,
+ECC keys, per-environment Application URIs — see
+[`opcua-client` · trust store and client identity](https://github.com/php-opcua/opcua-client/blob/master/docs/security/trust-store.md).
 
 ## CA bundle (`--ca`)
 
@@ -194,8 +189,12 @@ based. Use `--ca` only when the server documentation says so.
 
 ## Common pitfalls
 
-- **`--cert` without `--key`** — every non-`None` policy needs
-  both. The CLI exits with a configuration error.
+- **`--cert` without `--key` (or vice versa).** Both must be on
+  the command line for the CLI to wire a client certificate; if
+  one is missing, the CLI silently skips the `setClientCertificate()`
+  call. With any non-`None` security policy the channel will then
+  fail to open inside `opcua-client`, typically as
+  `BadCertificateInvalid` or a security exception from OpenSSL.
 - **Mismatched cert and key.** The library refuses to load the
   pair. Verify with
   `openssl x509 -modulus -in client.pem | openssl md5` and

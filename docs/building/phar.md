@@ -75,18 +75,16 @@ host's, as long as both are ≥ 8.2.
 
 ## What ends up inside
 
-| Section                              | Approximate size  |
-| ------------------------------------ | ----------------- |
-| Stub (Box-generated bootstrap)        | ~10 KB           |
-| `src/`                                | ~80 KB           |
-| `vendor/php-opcua/opcua-client/`     | ~400 KB          |
-| Other Composer deps                   | ~150 KB           |
-| Composer's autoload                   | ~20 KB           |
-| **Total**                             | **~650 KB**       |
+The PHAR bundles four broad chunks: Box's stub, the CLI's `src/`,
+`vendor/php-opcua/opcua-client/`, and Composer's autoload + the
+remaining transitive dependencies. Exact sizes shift with each
+upstream release; check your built artefact with `ls -lh
+build/opcua-cli.phar` after running `composer build:phar`.
 
-230+ files compressed into one archive. The PHAR is
-self-describing — `php -r "var_dump(new Phar('opcua-cli.phar'));"`
-inspects it.
+The PHAR is self-describing — inspect it with
+`php -r "var_dump(new Phar('opcua-cli.phar'));"`, or list its
+contents with `php -r "foreach (new RecursiveIteratorIterator(new
+Phar('build/opcua-cli.phar')) as \$f) echo \$f, PHP_EOL;"`.
 
 ## Why `phar.readonly=0`
 

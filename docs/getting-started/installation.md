@@ -32,8 +32,11 @@ composer require --dev php-opcua/opcua-cli
 ```
 <!-- @endcode-block -->
 
-The runtime is whichever PHP you use for the project (≥ 8.2,
-`ext-openssl`). After install, the CLI is at:
+The runtime is whichever PHP you use for the project (≥ 8.2).
+`opcua-cli`'s own `composer.json` only declares `php`,
+`php-opcua/opcua-client` and `php-tui/php-tui`; `ext-openssl` is
+pulled in transitively by the OPC UA stack but is not an explicit
+CLI-level requirement. After install, the CLI is at:
 
 <!-- @code-block language="bash" label="terminal — verify" -->
 ```bash
@@ -87,11 +90,11 @@ To build it from source, see [Building · Static binary](../building/static-bina
 
 ## Requirements
 
-| Form              | Runtime requirement                                  |
-| ----------------- | ---------------------------------------------------- |
-| Composer          | PHP ≥ 8.2, `ext-openssl`                             |
-| PHAR              | PHP ≥ 8.2, `ext-openssl`, `ext-phar`                 |
-| Static binary     | OS only — Linux 5.x / macOS 11+ / Windows 10+        |
+| Form              | Runtime requirement                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------- |
+| Composer          | PHP ≥ 8.2. `ext-openssl` is required transitively by `opcua-client` for any secured-channel use.          |
+| PHAR              | PHP ≥ 8.2, `ext-phar`. `ext-openssl` transitively required for secured channels.                          |
+| Static binary     | OS only — modern Linux / macOS / Windows. The exact minimum kernel / OS version depends on how the binary was built; consult the release notes. |
 
 The Composer install brings these in transitively:
 

@@ -30,7 +30,7 @@ opcua-cli read <endpoint> <nodeId> [--attribute=Value] [global-options]
 
 | Option              | Default | Effect                                            |
 | ------------------- | ------- | ------------------------------------------------- |
-| `--attribute=<id>`  | `Value` | Which attribute to read. Accepts name (`Value`, `DisplayName`, …) or numeric ID (`13`, `4`, …). |
+| `--attribute=<id>`  | `Value` | Which attribute to read. Accepts a name from the table below; unrecognised values silently fall back to `Value`. |
 
 Plus all the [global options](../reference/global-options.md).
 
@@ -46,13 +46,20 @@ opcua-cli read opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed"
 
 <!-- @code-block language="text" label="console output" -->
 ```text
-42.5
+NodeId:    ns=2;s=PLC/Speed
+Attribute: Value
+Value:     42.5
+Type:      Double
+Status:    Good (0x00000000)
+Source:    2026-05-15T10:30:00+00:00
+Server:    2026-05-15T10:30:00+00:00
 ```
 <!-- @endcode-block -->
 
-The default console output is the unwrapped value — what
-`DataValue::getValue()` returns in code. Scalars print directly,
-arrays as `[1, 2, 3]`, strings without quotes.
+The console output is a record block — every field (NodeId,
+Attribute, Value, Type, Status, Source/Server timestamps) on its
+own line. To get just the unwrapped value, use `--json` and pipe
+to `jq -r .Value`.
 
 ### Different attribute
 
@@ -64,16 +71,27 @@ opcua-cli read opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" --attribute=NodeClass
 ```
 <!-- @endcode-block -->
 
-Recognised attribute names: `Value`, `DisplayName`, `BrowseName`,
-`Description`, `DataType`, `NodeClass`, `WriteMask`,
-`UserWriteMask`, `AccessLevel`, `UserAccessLevel`,
-`MinimumSamplingInterval`, `Historizing`, `Executable`,
-`UserExecutable`, `IsAbstract`, `Symmetric`, `InverseName`,
-`ContainsNoLoops`, `EventNotifier`, `ValueRank`,
-`ArrayDimensions`.
+Recognised attribute names (the eight the CLI's lookup table
+covers):
 
-You can also pass the numeric attribute ID directly
-(`--attribute=14` for DataType).
+| Name          | OPC UA attribute                                |
+| ------------- | ----------------------------------------------- |
+| `NodeId`      | The node's own NodeId                            |
+| `NodeClass`   | `Object`, `Variable`, `Method`, …                |
+| `BrowseName`  | Qualified name used for path resolution          |
+| `DisplayName` | Localised display name                            |
+| `Description` | Localised description                             |
+| `Value`       | The value attribute (default)                    |
+| `DataType`    | NodeId of the value's DataType                    |
+| `AccessLevel` | Bitmask of allowed access (read / write / …)     |
+
+Other OPC UA attribute names (`WriteMask`, `UserAccessLevel`,
+`MinimumSamplingInterval`, `Historizing`, `Executable`,
+`IsAbstract`, `Symmetric`, `InverseName`, `ContainsNoLoops`,
+`EventNotifier`, `ValueRank`, `ArrayDimensions`, …) are **not**
+in the CLI's lookup table — passing them silently falls back to
+reading `Value`. Numeric attribute IDs are not parsed either; for
+those attributes, drop down to the library directly.
 
 ### JSON output — full DataValue
 
@@ -86,24 +104,30 @@ opcua-cli read opc.tcp://plc.local:4840 "ns=2;s=PLC/Speed" --json
 <!-- @code-block language="text" label="JSON output" -->
 ```text
 {
-  "value": 42.5,
-  "type": 11,
-  "statusCode": 0,
-  "sourceTimestamp": "2026-05-15T10:30:00.000000+00:00",
-  "serverTimestamp": "2026-05-15T10:30:00.123456+00:00"
+  "NodeId": "ns=2;s=PLC/Speed",
+  "Attribute": "Value",
+  "Value": "42.5",
+  "Type": "Double",
+  "Status": "Good (0x00000000)",
+  "Source": "2026-05-15T10:30:00+00:00",
+  "Server": "2026-05-15T10:30:00+00:00"
 }
 ```
 <!-- @endcode-block -->
 
-The JSON form carries the full `DataValue`:
+The JSON output is the same record the console mode prints,
+serialised verbatim with `json_encode` — PascalCase keys, all
+fields stringified:
 
-| Field             | Meaning                                                |
-| ----------------- | ------------------------------------------------------ |
-| `value`           | The PHP-native value (scalar, array, decoded structure) |
-| `type`            | The OPC UA `BuiltinType` integer (`11` = Double, `12` = String, …) |
-| `statusCode`      | `0` = Good. Non-zero indicates a per-item problem.     |
-| `sourceTimestamp` | When the device sampled the value (ISO 8601, UTC)      |
-| `serverTimestamp` | When the server packaged the response (ISO 8601, UTC)  |
+| Field         | Meaning                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| `NodeId`      | The NodeId you passed                                                                    |
+| `Attribute`   | The `--attribute` you requested (`Value` by default)                                     |
+| `Value`       | Stringified value (scalars → string, arrays → JSON, booleans → `"true"`/`"false"`)        |
+| `Type`        | The `BuiltinType` **name** (`"Double"`, `"String"`, …), never the numeric ID              |
+| `Status`      | Combined status string `"<Name> (0x<hex>)"`, e.g. `"Good (0x00000000)"`                   |
+| `Source`      | `sourceTimestamp` formatted with `format('c')`, or `"N/A"`                                |
+| `Server`      | `serverTimestamp` formatted likewise                                                       |
 
 See [Output formats](../output/output-formats.md) for the
 complete JSON schema.
@@ -127,9 +151,9 @@ parses as a NodeId. See [Endpoint URLs](../connecting/endpoint-urls.md).
 | `0`       | Read succeeded with a Good status                          |
 | `1`       | Read failed (transport error, OPC UA bad status, etc.)     |
 
-For per-item bad statuses (the `statusCode` field non-zero on a
-read whose call itself succeeded), the CLI still exits `1` —
-the read was unsuccessful from the user's perspective. See
+For per-item bad statuses (the `Status` field starting with `Bad`
+on a read whose call itself succeeded), the CLI still exits `1`
+— the read was unsuccessful from the user's perspective. See
 [Exit codes](../reference/exit-codes.md).
 
 ## How it maps to the library
@@ -148,8 +172,8 @@ See [`opcua-client` — reading attributes](https://github.com/php-opcua/opcua-c
   health probe ([CI smoke test](../recipes/ci-smoke-test.md)).
 - **Read DisplayName before Value** — verify the node is what you
   think it is. Cheap pre-check.
-- **`--json | jq .value`** — extract just the value for shell
-  pipelines.
+- **`--json | jq -r .Value`** — extract just the value for shell
+  pipelines. Note the PascalCase `Value`.
 
 ## Common pitfalls
 

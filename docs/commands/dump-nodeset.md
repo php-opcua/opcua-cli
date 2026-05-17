@@ -118,11 +118,12 @@ published a NodeSet2.xml.
 
 | You ran                                                  | The CLI does                                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------- |
-| `dump:nodeset <endpoint> --output=…`                     | `$client->browseRecursive(...)` + per-node `readMulti()` + `NodeSetXmlBuilder::build(...)` |
+| `dump:nodeset <endpoint> --output=…`                     | `$client->browseRecursive(...)` + per-node single-attribute `read()` calls (`DataType`, `ValueRank`, `IsAbstract`, `Symmetric`, `DataTypeDefinition`) + `NodeSetXmlBuilder::build(...)` |
 
-The internal flow is browse-then-read-then-build. For very large
-address spaces, the read step dominates — most of the runtime is
-batched attribute reads.
+The internal flow is browse-then-read-then-build. Each attribute
+read is a separate `read()` call — there is no `readMulti()` batch
+here. For very large address spaces, the per-node read step
+dominates the runtime.
 
 ## When to use it
 

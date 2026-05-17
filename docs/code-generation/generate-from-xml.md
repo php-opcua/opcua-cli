@@ -27,9 +27,12 @@ opcua-cli generate:nodeset path/to/MyVendor.NodeSet2.xml \
 ```
 <!-- @endcode-block -->
 
-No server connection. Pure XML → PHP transformation, with
-`php-cs-fixer` formatting applied at the end (when available on
-the host).
+No server connection. Pure XML → PHP transformation: the output
+files are written exactly as the heredoc-based templates in
+`CodeGenerator` produce them. The CLI does **not** shell out to
+`php-cs-fixer` or any other formatter on the generated output —
+if you need a project-specific style, run your formatter against
+the `--output` directory afterwards.
 
 ## The five categories
 

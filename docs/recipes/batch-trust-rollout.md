@@ -85,8 +85,9 @@ mkdir -p "$TRUST_STORE/trusted"
 for cert in "$CERTS_DIR"/*.der; do
     [ -f "$cert" ] || continue
 
-    # SHA-256 fingerprint of the DER bytes
-    fingerprint=$(openssl dgst -sha256 -hex < "$cert" | awk '{print $2}')
+    # SHA-1 fingerprint of the DER bytes (the format opcua-client's
+    # FileTrustStore uses to name files on disk)
+    fingerprint=$(openssl dgst -sha1 -hex < "$cert" | awk '{print $2}')
 
     # The trust store names files by fingerprint
     cp "$cert" "$TRUST_STORE/trusted/${fingerprint}.der"
@@ -98,7 +99,9 @@ done
 `./vendor-certs/` is the directory containing the
 DER-encoded certificates the vendor delivered (encrypted email,
 signed bundle, USB stick). Each file becomes a trusted cert,
-keyed by its SHA-256 fingerprint.
+keyed by its **SHA-1** fingerprint (this is what
+`opcua-client`'s `FileTrustStore` expects; using SHA-256 here
+would write files the trust store can't find at lookup time).
 
 After running:
 
@@ -118,7 +121,7 @@ the vendor documented. Verify each file:
 <!-- @code-block language="bash" label="bash — fingerprint verification" -->
 ```bash
 for cert in ./vendor-certs/*.der; do
-    fp=$(openssl dgst -sha256 -hex < "$cert" | awk '{print $2}')
+    fp=$(openssl dgst -sha1 -hex < "$cert" | awk '{print $2}')
     name=$(basename "$cert" .der)
     echo "$name: $fp"
 done
@@ -189,13 +192,15 @@ Catch upcoming expirations before they bite:
 <!-- @code-block language="bash" label="bash — expiring soon" -->
 ```bash
 opcua-cli trust:list --trust-store=/etc/opcua/trust --json \
-    | jq -r '.trustedCertificates[]
+    | jq -r '.[]
         | select(
-            (.validUntil
-                | strptime("%Y-%m-%d")
+            (.Expires
+                | sub("\\..*";"")
+                | sub("\\+.*";"")
+                | strptime("%Y-%m-%dT%H:%M:%S")
                 | mktime) < (now + 30*24*3600)
           )
-        | "\(.fingerprint)  \(.subject)  expires \(.validUntil)"'
+        | "\(.Fingerprint)  \(.Subject)  expires \(.Expires)"'
 ```
 <!-- @endcode-block -->
 
@@ -226,8 +231,11 @@ output as a human-readable index.
 
 ## Why the trust store is per-host
 
-The CLI's default `~/.opcua/` is per-user; production
-deployments use `--trust-store=/etc/opcua/trust` for a
+For per-user installs pass `--trust-store="$HOME/.opcua/trust"`
+(the underlying `FileTrustStore` defaults to `~/.opcua/` on POSIX,
+but only when the CLI instantiates the store — and the CLI only
+instantiates it when a trust flag is on the command line).
+Production deployments use `--trust-store=/etc/opcua/trust` for a
 host-wide store. Two implications:
 
 - **Permissions matter.** The store directory should be readable
