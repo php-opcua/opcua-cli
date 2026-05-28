@@ -409,7 +409,7 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 ## 6. Main Classes
 
 ### PhpOpcua\Cli\Application
-Main entry point. Registers all 10 commands, parses argv via ArgvParser, selects output adapter (ConsoleOutput or JsonOutput), delegates to CommandRunner.
+Main entry point. Registers all 11 commands, parses argv via ArgvParser, selects output adapter (ConsoleOutput or JsonOutput), delegates to CommandRunner.
 
 ### PhpOpcua\Cli\ArgvParser
 Stateless argument parser. Extracts command name, positional arguments, and options (long --opt=val, short -o val, boolean flags). Handles all CLI option aliases (-j → json, -u → username, etc.).
@@ -481,7 +481,7 @@ The dump output can be fed directly into generate:nodeset for end-to-end code ge
 
 ## 8. Testing
 
-288 tests (258 unit + 30 integration), 99.9% code coverage. Code coverage must remain >= 99.5% on every pull request.
+300+ tests (12 unit test files + 2 integration test files), 99.5%+ code coverage. Code coverage must remain >= 99.5% on every pull request.
 
 Tests use [Pest PHP](https://pestphp.com/) and [pcov](https://github.com/krakjoe/pcov) for coverage.
 
@@ -517,7 +517,7 @@ This package follows the same version numbering as php-opcua/opcua-client. Each 
 ## Links
 
 - Repository: https://github.com/php-opcua/opcua-cli
-- Documentation: https://github.com/php-opcua/opcua-cli/tree/master/doc
+- Documentation: https://github.com/php-opcua/opcua-cli/tree/master/docs (or https://www.php-opcua.com/documentation/opcua-cli)
 - Issues: https://github.com/php-opcua/opcua-cli/issues
 - Packagist: https://packagist.org/packages/php-opcua/opcua-cli
 - Changelog: https://github.com/php-opcua/opcua-cli/blob/master/CHANGELOG.md

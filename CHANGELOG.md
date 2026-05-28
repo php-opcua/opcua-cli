@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.4.0] - 2026-05-28
+
+Lock-step release with `php-opcua/opcua-client` v4.4.0. The CLI consumes the core's `OpcUaClientInterface` plus `ClientBuilder` / `Types\*` surface, all of which is additive in v4.4 — every command keeps working as-is. New core capabilities (`AggregateModule`, `HistoryUpdate`, `FileTransferModule`, the pluggable `ClientTransportInterface`) are reachable via the underlying client; surfacing them as dedicated CLI sub-commands is roadmap (see `ROADMAP.md`).
+
+### Changed
+
+- Bumped `php-opcua/opcua-client` from `^4.3.0` to `^4.4.0`.
+- Bumped `Application::VERSION` to `4.4.0`. `opcua-cli --version` now reports `4.4.0`.
+- Bumped CI test-server suite from `uanetstandard-test-suite@v1.2.0` to `@v1.5.0` (adds the HTTPS Binary server on `:4852`, the Security Key Service on `:4851`, ECC NIST / Brainpool servers on `:4848` / `:4849`, and the open62541-backed `historizing` server on `:24842` that the new HistoryUpdate integration tests target).
+- `composer.json` `support.docs` now points at the canonical docs site (`https://www.php-opcua.com/documentation/opcua-cli`) instead of the GitHub `tree/master/doc` URL.
+
+### Compatibility
+
+- No CLI source change was required: every command consumes `ClientBuilder`, `OpcUaClientInterface`, and the shared `Types\*` DTOs, none of which had breaking changes in v4.4.
+- `tests/Integration/` benefits transparently from the bumped test-suite (all 12 servers available; existing integration tests still run against the same `opcua-no-security` baseline server on `:4840`).
+
 ## [4.3.0] - 2026-04-24
 
 ### Security

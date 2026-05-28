@@ -27,7 +27,7 @@ use PhpOpcua\Client\Exception\UntrustedCertificateException;
  */
 class Application
 {
-    private const VERSION = '4.3.0';
+    private const VERSION = '4.4.0';
 
     /** @var array<string, CommandInterface> */
     private array $commands = [];

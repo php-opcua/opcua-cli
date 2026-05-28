@@ -156,7 +156,7 @@ Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+exp
 - Application (src/Application.php): entry point, command registration, argv routing
 - ArgvParser (src/ArgvParser.php): CLI argument and option parsing (no deps)
 - CommandRunner (src/CommandRunner.php): client lifecycle, security/auth/trust configuration
-- Commands/ (src/Commands/): 10 command implementations, each implements CommandInterface
+- Commands/ (src/Commands/): 11 command implementations, each implements CommandInterface (BrowseCommand, ReadCommand, WriteCommand, WatchCommand, ExploreCommand, EndpointsCommand, GenerateNodesetCommand, DumpNodesetCommand, TrustCommand, TrustListCommand, TrustRemoveCommand)
 - Output/ (src/Output/): OutputInterface with ConsoleOutput (tree/text) and JsonOutput adapters
 - CodeGenerator (src/CodeGenerator.php): NodeSet2.xml → PHP code generation
 - NodeSetParser (src/NodeSetParser.php): NodeSet2.xml XML parsing
@@ -180,7 +180,7 @@ Options: --trust-store=PATH, --trust-policy=POLICY (fingerprint, fingerprint+exp
 
 ## Testing
 
-288 tests (258 unit + 30 integration), 99.9% code coverage. Coverage must remain >= 99.5%.
+300+ tests (12 unit test files + 2 integration test files), 99.5%+ code coverage. Coverage must remain >= 99.5% on every pull request.
 
 ```
 ./vendor/bin/pest
@@ -191,7 +191,8 @@ php -d pcov.enabled=1 ./vendor/bin/pest --coverage
 
 - PHP >= 8.2
 - ext-openssl
-- php-opcua/opcua-client
+- php-opcua/opcua-client ^4.4 (lock-step with the core)
+- php-tui/php-tui ^0.2.1 (only needed if you use the `explore` interactive TUI)
 
 ## Versioning
 
@@ -204,7 +205,7 @@ MIT
 ## Links
 
 - Repository: https://github.com/php-opcua/opcua-cli
-- Documentation: https://github.com/php-opcua/opcua-cli/tree/master/doc
+- Documentation: https://github.com/php-opcua/opcua-cli/tree/master/docs (or https://www.php-opcua.com/documentation/opcua-cli)
 - Issues: https://github.com/php-opcua/opcua-cli/issues
 - Packagist: https://packagist.org/packages/php-opcua/opcua-cli
 - Client library: https://github.com/php-opcua/opcua-client
