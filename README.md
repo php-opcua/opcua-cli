@@ -370,7 +370,7 @@ opcua-cli read opc.tcp://localhost:4840 "i=2259" --debug-file=/tmp/opcua.log --j
 
 ### Tested against the OPC UA reference implementation
 
-The underlying [opcua-client](https://github.com/php-opcua/opcua-client) is integration-tested against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification. This is the same stack used by major industrial vendors to certify their products.
+The underlying [opcua-client](https://github.com/php-opcua/opcua-client) is integration-tested against **[UA-.NETStandard](https://github.com/OPCFoundation/UA-.NETStandard)** — the **reference implementation** maintained by the OPC Foundation, the organization that defines the OPC UA specification.
 
 This CLI tool is additionally integration-tested via [uanetstandard-test-suite](https://github.com/php-opcua/uanetstandard-test-suite), verifying that every command works correctly against real-world OPC UA servers. Like [opcua-client](https://github.com/php-opcua/opcua-client), the CLI unit tests run on **Linux, macOS, and Windows** across PHP 8.2–8.5 in CI on every push.
 
