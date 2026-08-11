@@ -6,6 +6,7 @@ namespace PhpOpcua\Cli\Commands;
 
 use PhpOpcua\Cli\Output\OutputInterface;
 use PhpOpcua\Client\ClientBuilder;
+use PhpOpcua\Client\Module\Subscription\DataChangeNotification;
 use PhpOpcua\Client\OpcUaClientInterface;
 use PhpOpcua\Client\Types\NodeId;
 
@@ -129,9 +130,9 @@ class WatchCommand implements CommandInterface
             $response = $client->publish($lastAck);
 
             foreach ($response->notifications as $notif) {
-                if ($notif['type'] === 'DataChange') {
+                if ($notif instanceof DataChangeNotification) {
                     $timestamp = date('H:i:s.') . substr((string) microtime(true), -3);
-                    $value = $notif['dataValue']->getValue();
+                    $value = $notif->dataValue->getValue();
                     $output->writeln("[{$timestamp}] " . $this->formatValue($value));
                 }
             }

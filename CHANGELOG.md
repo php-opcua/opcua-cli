@@ -1,5 +1,35 @@
 # Changelog
 
+## [4.5.0] - 2026-08-11
+
+Lock-step release with `php-opcua/opcua-client` v4.5.0, its security-hardening release. One CLI command needed migrating — `watch`, for the typed subscription notifications. Separately, this release fixes three defects in `generate:nodeset`'s output that were found while verifying the bump on Linux.
+
+### Changed
+
+- Bumped `php-opcua/opcua-client` from `^4.4.0` to `^4.5.0`.
+- Bumped `Application::VERSION` to `4.5.0`. `opcua-cli --version` now reports `4.5.0`.
+- **`watch` migrated to the typed notifications.** The core's `PublishResult::$notifications` now holds `DataChangeNotification` / `EventNotification` objects instead of `['type' => 'DataChange', …]` arrays, so `WatchCommand` matches with `instanceof DataChangeNotification` and reads `$notif->dataValue` instead of array offsets. Without the change the command silently printed nothing: the array offset on an object never matched. Output format is unchanged.
+
+### Fixed — `generate:nodeset` output
+
+All three are pre-existing, and all three produced code that fails only on a case-sensitive filesystem or at the point where PHP resolves a relative class name. They are the source of the corresponding fixes in `php-opcua/opcua-client-nodeset` v4.5.0.
+
+- **DTOs with an enum field were unconstructible, and their codecs could not decode.** Codecs are generated into `<Namespace>\Codecs` and DTOs into `<Namespace>\Types`, while both address enums relatively as `Enums\Foo` — which PHP resolves against the *current* namespace, i.e. `<Namespace>\Codecs\Enums` and `<Namespace>\Types\Enums`. Neither exists. In a codec that raised `Error: Class not found` on decode; in a DTO the declared property type resolved to a non-existent class, so **no value could satisfy it** and construction always threw `TypeError`. `CodeGenerator::generateDtoClass()` and `generateCodecClass()` now emit `use <Namespace>\Enums;` whenever a generated enum is referenced, and omit it otherwise.
+- **Dependency registrar names were guessed from the model URI.** `GenerateNodesetCommand` derived the dependency class from the directory name (`http://opcfoundation.org/UA/DI/` → `DI` → `DIRegistrar`) while the registrar is actually named after the NodeSet2 file (`Opc.Ua.Di.NodeSet2.xml` → `DiRegistrar`). Any spec whose file casing differs from its URI got an unloadable reference. The new `resolveDependencyRegistrar()` takes the name from the registrar file that exists next to the output directory: exact match first, then case-insensitive, then — for a spec split across several nodesets, such as AML → `AMLBaseTypes` + `AMLLibraries` — the single registrar whose name extends the referenced one. When the dependency has not been generated yet it keeps the directory-derived guess, leaving it to the consumer's cleanup pass.
+
+  Resolution reads the names `glob()` reports and compares them case-sensitively, rather than probing `is_file()` with the guessed name. On a case-insensitive filesystem (Windows, default macOS) the probe confirms `DIRegistrar.php` while the file — and therefore the class — is `DiRegistrar`, so generating on Windows would emit a reference that fails to autoload on Linux. The generated output is now identical on every platform.
+
+### Tests
+
+- New `tests/Unit/GeneratedEnumResolutionTest.php` (5 tests): the `Enums` import is emitted for DTOs and codecs that need it and omitted for those that don't, plus an end-to-end case that generates an enum, a DTO and a codec, loads them, and round-trips a value through `BinaryEncoder` / `BinaryDecoder`. That last test reproduces the exact `TypeError` when the import is removed.
+- New `tests/Unit/DependencyRegistrarResolutionTest.php` (5 tests): exact match, exact-over-case-insensitive precedence, split-spec resolution, the not-yet-generated fallback, and the ambiguous-candidates fallback. The exact-match test also asserts that the emitted class name matches a file on disk byte-for-byte, which is what fails when resolution goes through `is_file()` on a case-insensitive filesystem. The precedence test needs two names differing only in case, so it skips where the filesystem cannot hold both.
+- `tests/Integration/CliTest.php` migrated to the typed notifications alongside `WatchCommand`.
+
+### Compatibility
+
+- **No CLI interface change.** Same commands, same flags, same output formats.
+- Applications embedding `CodeGenerator` directly will see the extra `use` line in generated DTOs and codecs that reference enums. Previously generated code keeps working; regenerating is what picks up the fix.
+
 ## [4.4.0] - 2026-05-28
 
 Lock-step release with `php-opcua/opcua-client` v4.4.0. The CLI consumes the core's `OpcUaClientInterface` plus `ClientBuilder` / `Types\*` surface, all of which is additive in v4.4 — every command keeps working as-is. New core capabilities (`AggregateModule`, `HistoryUpdate`, `FileTransferModule`, the pluggable `ClientTransportInterface`) are reachable via the underlying client; surfacing them as dedicated CLI sub-commands is roadmap (see `ROADMAP.md`).

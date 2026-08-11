@@ -81,7 +81,8 @@ class GenerateNodesetCommand implements CommandInterface
                 $output->writeln("  - {$req['modelUri']}{$ver}");
                 $depDir = $this->modelUriToDirName($req['modelUri']);
                 if ($depDir !== null) {
-                    $dependencyClasses[] = $baseNamespace . '\\' . $depDir . '\\' . $depDir . 'Registrar';
+                    $depClass = $this->resolveDependencyRegistrar($outputDir, $depDir);
+                    $dependencyClasses[] = $baseNamespace . '\\' . $depDir . '\\' . $depClass;
                 }
             }
             $output->writeln('');
@@ -226,6 +227,60 @@ class GenerateNodesetCommand implements CommandInterface
         $name = preg_replace('/[^A-Za-z0-9]/', '', $name) ?? '';
 
         return $name !== '' ? $name : null;
+    }
+
+    /**
+     * Resolve the registrar class name of an already-generated dependency.
+     *
+     * The directory is named after the model URI (`.../UA/DI/` -> `DI`) while the
+     * registrar is named after the NodeSet2 file (`Opc.Ua.Di.NodeSet2.xml` ->
+     * `DiRegistrar`), so the two disagree for any spec whose file casing differs
+     * from its URI. When the dependency has already been generated next to this
+     * one, take the name from the file that exists; otherwise fall back to the
+     * directory-derived guess and leave it to the caller's cleanup pass.
+     *
+     * @param string $outputDir Output directory of the spec being generated.
+     * @param string $depDir Directory name of the dependency spec.
+     * @return string
+     */
+    private function resolveDependencyRegistrar(string $outputDir, string $depDir): string
+    {
+        $guess = $depDir . 'Registrar';
+        $depPath = dirname($outputDir) . '/' . $depDir;
+
+        if (! is_dir($depPath)) {
+            return $guess;
+        }
+
+        // Resolution goes through the names glob() reports, never through
+        // is_file() on a guessed name: on a case-insensitive filesystem the
+        // latter confirms `DIRegistrar.php` while the file on disk — and so the
+        // class — is `DiRegistrar`, which then fails to autoload everywhere else.
+        $candidates = [];
+        foreach (glob($depPath . '/*Registrar.php') ?: [] as $candidate) {
+            $candidates[] = basename($candidate, '.php');
+        }
+
+        if (in_array($guess, $candidates, true)) {
+            return $guess;
+        }
+
+        foreach ($candidates as $candidate) {
+            if (strcasecmp($candidate, $guess) === 0) {
+                return $candidate;
+            }
+        }
+
+        // A spec split across several nodesets (AML -> AMLBaseTypes + AMLLibraries)
+        // has no registrar named after the spec itself.
+        $extending = [];
+        foreach ($candidates as $candidate) {
+            if (stripos($candidate, $depDir) === 0) {
+                $extending[] = $candidate;
+            }
+        }
+
+        return count($extending) === 1 ? $extending[0] : $guess;
     }
 
     private function safeClassName(string $name): string

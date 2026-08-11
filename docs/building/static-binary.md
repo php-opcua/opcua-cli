@@ -202,7 +202,7 @@ surface.
 <!-- @code-block language="bash" label="terminal — verification" -->
 ```bash
 ./opcua-cli --version
-# → opcua-cli 4.4.0
+# → opcua-cli 4.5.0
 
 ./opcua-cli --help
 # Should print the command catalogue

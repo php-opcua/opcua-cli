@@ -191,7 +191,7 @@ php -d pcov.enabled=1 ./vendor/bin/pest --coverage
 
 - PHP >= 8.2
 - ext-openssl
-- php-opcua/opcua-client ^4.4 (lock-step with the core)
+- php-opcua/opcua-client ^4.5 (lock-step with the core)
 - php-tui/php-tui ^0.2.1 (only needed if you use the `explore` interactive TUI)
 
 ## Versioning

@@ -41,7 +41,7 @@ CLI-level requirement. After install, the CLI is at:
 <!-- @code-block language="bash" label="terminal — verify" -->
 ```bash
 vendor/bin/opcua-cli --version
-# → opcua-cli 4.4.0
+# → opcua-cli 4.5.0
 ```
 <!-- @endcode-block -->
 

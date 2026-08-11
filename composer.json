@@ -44,7 +44,7 @@
   ],
   "require": {
     "php": "^8.2",
-    "php-opcua/opcua-client": "^4.4.0",
+    "php-opcua/opcua-client": "^4.5.0",
     "php-tui/php-tui": "^0.2.1"
   },
   "require-dev": {

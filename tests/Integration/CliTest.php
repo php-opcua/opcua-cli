@@ -6,6 +6,7 @@ use PhpOpcua\Cli\Application;
 use PhpOpcua\Cli\Commands\WatchCommand;
 use PhpOpcua\Cli\Output\ConsoleOutput;
 use PhpOpcua\Cli\Tests\Integration\Helpers\Readiness;
+use PhpOpcua\Client\Module\Subscription\DataChangeNotification;
 use PhpOpcua\Client\Tests\Integration\Helpers\TestHelper;
 use PhpOpcua\Client\TrustStore\FileTrustStore;
 use PhpOpcua\Client\Types\BuiltinType;
@@ -162,7 +163,7 @@ describe('CLI Integration', function () {
             for ($i = 0; $i < 10; $i++) {
                 $pub = $watchClient->publish();
                 foreach ($pub->notifications as $notif) {
-                    if ($notif['type'] === 'DataChange' && $notif['dataValue']->getValue() === 9999) {
+                    if ($notif instanceof DataChangeNotification && $notif->dataValue->getValue() === 9999) {
                         $receivedNewValue = true;
 
                         break 2;

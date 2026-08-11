@@ -83,6 +83,7 @@ class CodeGenerator
     public function generateDtoClass(string $className, array $fields, string $namespace, array $enumFieldMap = []): string
     {
         $properties = '';
+        $usesEnums = false;
         foreach ($fields as $field) {
             $phpType = $this->resolvePhpType($field['dataType'], $enumFieldMap);
             $isArray = ($field['valueRank'] ?? -1) >= 0;
@@ -93,8 +94,13 @@ class CodeGenerator
             } elseif ($isOptional && $phpType !== 'mixed') {
                 $phpType = '?' . $phpType;
             }
+            if (str_contains($phpType, 'Enums\\')) {
+                $usesEnums = true;
+            }
             $properties .= "        public {$phpType} \${$field['name']},\n";
         }
+
+        $enumImport = $usesEnums ? "\nuse {$namespace}\\Enums;\n" : '';
 
         return <<<PHP
         <?php
@@ -102,7 +108,7 @@ class CodeGenerator
         declare(strict_types=1);
 
         namespace {$namespace}\\Types;
-
+        {$enumImport}
         /**
          * DTO for the {$className} structured data type.
          *
@@ -131,6 +137,7 @@ class CodeGenerator
     {
         $decodeArgs = '';
         $encodeLines = '';
+        $usesEnums = false;
 
         foreach ($fields as $field) {
             $mapping = self::DATATYPE_TO_METHOD[$field['dataType']] ?? null;
@@ -144,6 +151,7 @@ class CodeGenerator
                 $decodeArgs .= "            \$this->readArray(\$decoder, fn () => {$readExpr}),\n";
                 $encodeLines .= "        \$this->writeArray(\$encoder, \$value->{$fieldName}, fn (\$item) => {$writeExpr});\n";
             } elseif ($enumClass !== null) {
+                $usesEnums = true;
                 $decodeArgs .= "            Enums\\{$enumClass}::from(\$decoder->readInt32()),\n";
                 $encodeLines .= "        \$encoder->writeInt32(\$value->{$fieldName}->value);\n";
             } elseif ($mapping === null) {
@@ -189,6 +197,10 @@ class CodeGenerator
             HELPERS;
         }
 
+        // Codecs live in {$namespace}\Codecs, so a relative `Enums\Foo` reference
+        // would resolve to {$namespace}\Codecs\Enums\Foo. Import the namespace.
+        $enumImport = $usesEnums ? "use {$namespace}\\Enums;\n" : '';
+
         return <<<PHP
         <?php
 
@@ -199,7 +211,7 @@ class CodeGenerator
         use PhpOpcua\\Client\\Encoding\\BinaryDecoder;
         use PhpOpcua\\Client\\Encoding\\BinaryEncoder;
         use PhpOpcua\\Client\\Encoding\\ExtensionObjectCodec;
-        use {$namespace}\\Types\\{$dtoName};
+        {$enumImport}use {$namespace}\\Types\\{$dtoName};
 
         /**
          * Codec for the {$dtoName} structured data type.
